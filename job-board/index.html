@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Job Board</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" rel="stylesheet"/>
+
+<style>
+/* ── Base ────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  font-family: 'Open Sans', sans-serif;
+  background: #fff;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.7;
+  margin: 0;
+}
+h1,h2,h3,h4,h5,h6 {
+  font-family: 'Work Sans', sans-serif;
+  color: #333;
+  line-height: 1.3;
+}
+
+/* ── Intro ───────────────────────────────────────────────── */
+.intro-text {
+  color: #666;
+  font-size: 0.93rem;
+  line-height: 1.7;
+  margin-bottom: 22px;
+  max-width: 760px;
+}
+
+/* ── Table ───────────────────────────────────────────────── */
+.table-card {
+  border: 1px solid #e2e2e2;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #fff;
+}
+table.dataTable {
+  border-collapse: collapse !important;
+  margin: 0 !important;
+  width: 100% !important;
+}
+table.dataTable thead th {
+  background: #500000;
+  color: rgba(255,255,255,0.92);
+  font-family: 'Work Sans', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  padding: 11px 14px;
+  border: none !important;
+  border-right: 1px solid rgba(255,255,255,0.12) !important;
+}
+table.dataTable thead th:last-child { border-right: none !important; }
+table.dataTable tbody td {
+  font-size: 0.875rem;
+  color: #333;
+  padding: 10px 14px;
+  vertical-align: top;
+  border-bottom: 1px solid #f2f2f2 !important;
+  line-height: 1.45;
+}
+table.dataTable tbody td:last-child { white-space: nowrap; }
+table.dataTable tbody tr:last-child td { border-bottom: none !important; }
+table.dataTable tbody tr:hover > td { background: #fafafa !important; }
+
+/* ── Job link ────────────────────────────────────────────── */
+.job-link {
+  color: #500000;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+.job-link:hover { text-decoration: underline; color: #700000; }
+
+/* ── Employer ────────────────────────────────────────────── */
+.employer-main { font-size: 0.8rem; font-weight: 600; color: #94969a; margin-top: 3px; }
+.employer-sub  { color: #3e3e3e; }
+
+/* ── Count + pagination ──────────────────────────────────── */
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_info { display: none !important; }
+.table-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-top: 1px solid #e2e2e2;
+  background: #f6f6f6;
+}
+.job-count {
+  font-size: 0.75rem;
+  color: #999;
+  font-family: 'Work Sans', sans-serif;
+}
+.dataTables_wrapper .dataTables_paginate { padding: 0; }
+.dataTables_wrapper .pagination .page-link {
+  color: #500000 !important;
+  border-color: #e2e2e2 !important;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 0.75rem;
+  background-color: #fff !important;
+}
+.dataTables_wrapper .pagination .page-item.active .page-link {
+  background-color: #500000 !important;
+  border-color: #500000 !important;
+  color: #fff !important;
+}
+.dataTables_wrapper .pagination .page-link:hover {
+  background-color: #f8f0f0 !important;
+  color: #500000 !important;
+}
+.dataTables_wrapper .pagination .page-item.disabled .page-link {
+  color: #ccc !important;
+  border-color: #ccc !important;
+  background-color: #fff !important;
+}
+
+/* ── Loading / error ─────────────────────────────────────── */
+.state-msg {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999;
+  font-size: 0.9rem;
+  font-family: 'Work Sans', sans-serif;
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .table-footer { flex-direction: column; gap: 6px; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<div style="padding: 0 20px 40px 20px;">
+
+  <p class="intro-text">
+    Open positions in education policy research, practice, and higher education. Updated regularly. Click any job title to view the full posting.
+  </p>
+
+  <div class="table-card">
+    <div id="loading-msg" class="state-msg">Loading positions&hellip;</div>
+    <table id="job-table" style="width:100%; display:none;">
+      <thead>
+        <tr>
+          <th>Position</th>
+          <th>Institution</th>
+          <th>Date Added</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div class="table-footer" style="display:none;" id="table-footer">
+      <span class="job-count" id="job-count"></span>
+      <div id="job-table_paginate"></div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSgNB_KmsOlQaaWn9nwtv27XZ9qbrI3YEOyoiXcle9sI6ZZwHGLwiMvrVV7od0bqBq5rzHu9siEdtQN/pub?gid=0&single=true&output=csv';
+
+function parseRow(line) {
+  const result = [];
+  let cur = '', inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i+1] === '"') { cur += '"'; i++; }
+      else { inQuotes = !inQuotes; }
+    } else if (ch === ',' && !inQuotes) {
+      result.push(cur); cur = '';
+    } else { cur += ch; }
+  }
+  result.push(cur);
+  return result;
+}
+
+function parseCSV(text) {
+  const lines = text.split('\n');
+  const headers = parseRow(lines[0]);
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const vals = parseRow(lines[i]);
+    const obj = {};
+    headers.forEach((h, idx) => obj[h.trim()] = (vals[idx] || '').trim());
+    rows.push(obj);
+  }
+  return rows;
+}
+
+function escHtml(s) {
+  return String(s || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+let dt;
+
+fetch(CSV_URL)
+  .then(r => r.text())
+  .then(text => {
+    const allJobs = parseCSV(text).filter(r => (r.site_status || '').toLowerCase() === 'live');
+
+    document.getElementById('loading-msg').style.display = 'none';
+    document.getElementById('job-table').style.display = '';
+    document.getElementById('table-footer').style.display = '';
+
+    dt = $('#job-table').DataTable({
+      data: allJobs,
+      pageLength: 25,
+      order: [[2, 'desc']],
+      pagingType: 'simple_numbers',
+      columns: [
+        {
+          data: null,
+          render: r => `<a class="job-link" href="${escHtml(r.link)}" target="_blank" rel="noopener">${escHtml(r.job_name)}</a>`
+        },
+        {
+          data: null,
+          render: r => {
+            const main = `<div class="employer-main">${escHtml(r.employer_2 || '')}</div>`;
+            const sub  = r.employer_1 ? `<div class="employer-sub">${escHtml(r.employer_1)}</div>` : '';
+            return main + sub;
+          }
+        },
+        { data: 'submission_time' }
+      ]
+    });
+
+    $('#job-table_paginate').detach().appendTo('#table-footer');
+    updateCount();
+    dt.on('draw', updateCount);
+  })
+  .catch(() => {
+    document.getElementById('loading-msg').textContent = 'Could not load positions. Please try again later.';
+  });
+
+function updateCount() {
+  if (!dt) return;
+  const info = dt.page.info();
+  document.getElementById('job-count').textContent =
+    `${info.recordsDisplay} position${info.recordsDisplay !== 1 ? 's' : ''}`;
+}
+</script>
+
+<!-- Auto-resize for WordPress iframe -->
+<script>
+  function sendHeight() {
+    window.parent.postMessage({ iframeHeight: document.documentElement.scrollHeight }, '*');
+  }
+  window.addEventListener('load', sendHeight);
+  new MutationObserver(sendHeight).observe(document.body, { childList: true, subtree: true, attributes: true });
+</script>
+</body>
+</html>
