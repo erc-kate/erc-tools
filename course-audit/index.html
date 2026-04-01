@@ -185,6 +185,8 @@ table.dataTable tbody tr.row-open > td {
   transition: transform 0.2s ease;
   line-height: 1;
   opacity: 0.8;
+  font-family: 'Segoe UI Symbol', 'Apple Symbols', sans-serif;
+  font-variant-emoji: text;
 }
 tr.row-open .toggle-arrow { transform: rotate(90deg); opacity: 1; }
 
@@ -505,7 +507,7 @@ $(document).ready(function() {
     tr.dataset.idx = i;
     tr.innerHTML = `
       <td style="text-align:center;width:36px">
-        <span class="toggle-arrow">&#9654;</span>
+        <span class="toggle-arrow">&#9654;&#xFE0E;</span>
       </td>
       <td><span class="course-code">${c.course_name} ${c.course_num}</span></td>
       <td>${c.title}</td>
@@ -613,7 +615,7 @@ function buildThemesTab() {
         </div>
         <p class="theme-def-text">${t.theme_definition}</p>
         <button class="subtheme-toggle" id="${btnId}" onclick="toggleSubthemes('${listId}','${btnId}')">
-          <span class="toggle-icon">&#9654;</span>
+          <span class="toggle-icon">&#9654;&#xFE0E;</span>
           ${subs.length} Subtheme${subs.length !== 1 ? 's' : ''}
         </button>
         <div class="subtheme-list" id="${listId}">
