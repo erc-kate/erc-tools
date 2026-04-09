@@ -328,8 +328,8 @@
 
     submitBtn.disabled   = true;
     submitBtn.textContent = "Submitting…";
-    status.className     = "status-msg";
-    status.style.display = "none";
+    status.className = "status-msg";
+    status.style.removeProperty("display");
 
     fetch(APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify(formData) })
       .then(function (r) { return r.json(); })
