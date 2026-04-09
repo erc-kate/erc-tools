@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Education Policy Jobs</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" rel="stylesheet"/>
+<link href="https://cdn.datatables.net/fixedheader/3.4.0/css/fixedHeader.bootstrap5.min.css" rel="stylesheet"/>
+
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  font-family: 'Open Sans', sans-serif;
+  background: #fff;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.7;
+  margin: 0;
+  padding: 24px 32px 48px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Work Sans', sans-serif;
+  color: #333;
+  line-height: 1.3;
+}
+
+/* ── Search bar ──────────────────────────────────────────── */
+.search-wrap {
+  margin-bottom: 1.25rem;
+}
+.search-wrap input {
+  width: 100%;
+  max-width: 420px;
+  padding: 8px 14px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 13px;
+  color: #555;
+  outline: none;
+}
+.search-wrap input:focus {
+  border-color: #500000;
+}
+
+/* ── Job count ───────────────────────────────────────────── */
+#job-count {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 0.75rem;
+  font-family: 'Work Sans', sans-serif;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+/* ── Table ───────────────────────────────────────────────── */
+table.dataTable {
+  border-collapse: collapse !important;
+  width: 100% !important;
+}
+
+table.dataTable thead tr th {
+  background: #500000;
+  color: #fff;
+  font-family: 'Work Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 10px 14px;
+  border: none !important;
+  white-space: nowrap;
+}
+
+table.dataTable thead th.sorting::after,
+table.dataTable thead th.sorting_asc::after,
+table.dataTable thead th.sorting_desc::after {
+  color: rgba(255,255,255,0.6);
+}
+
+table.dataTable tbody tr {
+  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.15s ease;
+}
+table.dataTable tbody tr:hover {
+  background: #fdf8f8 !important;
+}
+table.dataTable tbody td {
+  padding: 12px 14px;
+  vertical-align: middle;
+  color: #555;
+  font-size: 13px;
+}
+
+/* ── Job title link ──────────────────────────────────────── */
+.job-title a {
+  color: #500000;
+  font-weight: 600;
+  font-family: 'Work Sans', sans-serif;
+  text-decoration: none;
+  font-size: 13.5px;
+}
+.job-title a:hover {
+  text-decoration: underline;
+}
+
+/* ── Institution ─────────────────────────────────────────── */
+.institution-main {
+  color: #333;
+  font-weight: 600;
+  font-size: 13px;
+}
+.institution-sub {
+  color: #999;
+  font-size: 11.5px;
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+/* ── Date badge ──────────────────────────────────────────── */
+.date-cell {
+  white-space: nowrap;
+  font-size: 12.5px;
+}
+.date-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #bbb;
+  display: block;
+  margin-bottom: 1px;
+}
+.date-value {
+  color: #555;
+}
+.date-value.closing-soon {
+  color: #c0392b;
+  font-weight: 600;
+}
+
+/* ── Footer ──────────────────────────────────────────────── */
+.table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.dataTables_wrapper .dataTables_paginate .page-link {
+  color: #500000 !important;
+  font-size: 13px;
+}
+.dataTables_wrapper .dataTables_paginate .page-item.active .page-link {
+  background: #500000 !important;
+  border-color: #500000 !important;
+  color: #fff !important;
+}
+.dataTables_wrapper .dataTables_paginate { padding: 0; }
+.dataTables_wrapper .dataTables_info { display: none; }
+
+/* ── Loading / error states ──────────────────────────────── */
+#loading-msg {
+  color: #999;
+  font-size: 13px;
+  padding: 2rem 0;
+}
+#error-msg {
+  color: #c0392b;
+  font-size: 13px;
+  padding: 2rem 0;
+  display: none;
+}
+</style>
+</head>
+<body>
+
+<div id="loading-msg">Loading jobs...</div>
+<div id="error-msg">Could not load job listings. Please try again later.</div>
+
+<div id="jobs-container" style="display:none;">
+  <div class="search-wrap">
+    <input type="text" id="job-search" placeholder="Search by title, institution, or keyword..."/>
+  </div>
+  <div id="job-count"></div>
+  <table id="jobs-table" class="table" style="width:100%">
+    <thead>
+      <tr>
+        <th>Position</th>
+        <th>Institution</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody id="jobs-body"></tbody>
+  </table>
+  <div class="table-footer">
+    <div id="jobs-table_paginate"></div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/fixedheader/3.4.0/js/dataTables.fixedHeader.min.js"></script>
+
+<script>
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS678xnPHwootuHah-_PIBherWBcb5dtbsJwJ5hQ3Bkp-Mw2mAC52fVlOXfl6wwb9Dw0bGjkBukUfiq/pub?gid=6933568&single=true&output=csv";
+
+// ── Parse CSV (handles quoted fields with commas) ─────────
+function parseCSV(text) {
+  const rows = [];
+  const lines = text.split('\n');
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    const cols = [];
+    let cur = '', inQuote = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { inQuote = !inQuote; }
+      else if (ch === ',' && !inQuote) { cols.push(cur.trim()); cur = ''; }
+      else { cur += ch; }
+    }
+    cols.push(cur.trim());
+    rows.push(cols);
+  }
+  return rows;
+}
+
+// ── Parse date string (e.g. "6-Feb-26") ──────────────────
+function parseDate(str) {
+  if (!str || !str.trim()) return null;
+  const d = new Date(str.trim());
+  return isNaN(d) ? null : d;
+}
+
+// ── Format date for display ───────────────────────────────
+function formatDate(d) {
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// ── Is closing soon (within 14 days)? ────────────────────
+function isClosingSoon(d) {
+  if (!d) return false;
+  const diff = (d - new Date()) / (1000 * 60 * 60 * 24);
+  return diff >= 0 && diff <= 14;
+}
+
+// ── Main ──────────────────────────────────────────────────
+fetch(CSV_URL)
+  .then(r => r.text())
+  .then(text => {
+    const rows = parseCSV(text);
+    if (rows.length < 2) throw new Error('No data');
+
+    const headers = rows[0].map(h => h.toLowerCase().trim());
+    const idxName       = headers.findIndex(h => h.includes('job name'));
+    const idxDeadline   = headers.findIndex(h => h.includes('application deadline'));
+    const idxGroup      = headers.findIndex(h => h.includes('college'));
+    const idxInst       = headers.findIndex(h => h.includes('institution'));
+    const idxLink       = headers.findIndex(h => h.includes('posting link'));
+    const idxStatus     = headers.findIndex(h => h.includes('status'));
+    const idxDateAdded  = headers.findIndex(h => h.includes('date added'));
+
+    const tbody = document.getElementById('jobs-body');
+
+    rows.slice(1).forEach(row => {
+      // Filter: only show Active rows (if Status column exists)
+      if (idxStatus >= 0) {
+        const status = (row[idxStatus] || '').trim().toLowerCase();
+        if (status && status !== 'active') return;
+      }
+
+      const name     = row[idxName]      || '';
+      const deadline = row[idxDeadline]  || '';
+      const group    = row[idxGroup]     || '';
+      const inst     = row[idxInst]      || '';
+      const link     = row[idxLink]      || '';
+      const dateAdded = idxDateAdded >= 0 ? (row[idxDateAdded] || '') : '';
+
+      // Date logic: deadline > date added > blank
+      const deadlineDate  = parseDate(deadline);
+      const dateAddedDate = parseDate(dateAdded);
+      let dateLabel = '', dateVal = '', dateSort = '', soonClass = '';
+
+      if (deadlineDate) {
+        dateLabel = 'Closes';
+        dateVal   = formatDate(deadlineDate);
+        dateSort  = deadlineDate.toISOString();
+        if (isClosingSoon(deadlineDate)) soonClass = 'closing-soon';
+      } else if (dateAddedDate) {
+        dateLabel = 'Added';
+        dateVal   = formatDate(dateAddedDate);
+        dateSort  = dateAddedDate.toISOString();
+      }
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="job-title">
+          ${link ? `<a href="${link}" target="_blank" rel="noopener">${name}</a>` : name}
+        </td>
+        <td>
+          <div class="institution-main">${inst}</div>
+          ${group ? `<div class="institution-sub">${group}</div>` : ''}
+        </td>
+        <td class="date-cell" data-sort="${dateSort}">
+          ${dateVal ? `<span class="date-label">${dateLabel}</span><span class="date-value ${soonClass}">${dateVal}</span>` : '<span style="color:#ddd;">-</span>'}
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    // ── Init DataTable ────────────────────────────────────
+    document.getElementById('loading-msg').style.display = 'none';
+    document.getElementById('jobs-container').style.display = 'block';
+
+    const dt = $('#jobs-table').DataTable({
+      pageLength: 25,
+      ordering: true,
+      order: [[2, 'asc']],
+      fixedHeader: true,
+      columnDefs: [{ type: 'string', targets: 2 }],
+      language: { paginate: { previous: '&lsaquo;', next: '&rsaquo;' } },
+      dom: 'tp',
+      drawCallback: function() {
+        const info  = this.api().page.info();
+        const shown = info.recordsDisplay;
+        const total = info.recordsTotal;
+        document.getElementById('job-count').textContent =
+          shown === total
+            ? total + ' active listings'
+            : 'Showing ' + shown + ' of ' + total + ' listings';
+        const pag = document.querySelector('#jobs-table_paginate');
+        const foot = document.querySelector('.table-footer #jobs-table_paginate');
+        if (pag && !foot) document.querySelector('.table-footer').prepend(pag);
+      }
+    });
+
+    // ── Search ────────────────────────────────────────────
+    document.getElementById('job-search').addEventListener('input', function() {
+      dt.search(this.value).draw();
+    });
+
+  })
+  .catch(() => {
+    document.getElementById('loading-msg').style.display = 'none';
+    document.getElementById('error-msg').style.display = 'block';
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Submit Event — ERC Event Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<div class="page-header">
+  <div>
+    <a href="../">← ERC Tools</a>
+    <h1>ERC Event Hub</h1>
+  </div>
+</div>
+
+<div class="page-body">
+  <div class="card">
+
+    <form id="eventForm" novalidate>
+
+      <div class="field">
+        <label class="field-label" for="eventType">Event type</label>
+        <select id="eventType" required>
+          <option value="" disabled selected>Select a type…</option>
+          <option value="EdTalk">EdTalk / Speaker(s)</option>
+          <option value="Happy Hour">Happy Hour</option>
+          <option value="Internal">Internal</option>
+          <option value="Misc">Miscellaneous</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="eventDate">Event date</label>
+        <input type="date" id="eventDate" required>
+      </div>
+
+      <hr class="divider hidden" id="mainDivider">
+
+      <!-- ── EDTALK ───────────────────────────────────────── -->
+      <div id="speakerSection" class="hidden">
+        <div id="speakerList"></div>
+        <button type="button" class="btn-add" id="addSpeakerBtn">+ Add another speaker</button>
+      </div>
+
+      <!-- ── HAPPY HOUR ───────────────────────────────────── -->
+      <div id="happyHourSection" class="hidden">
+        <div class="field">
+          <label class="field-label">Following another ERC event?</label>
+          <div class="radio-group">
+            <label><input type="radio" name="followsEvent" value="yes"> Yes</label>
+            <label><input type="radio" name="followsEvent" value="no" checked> No</label>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label" for="hhLocation">Location <span class="optional">(optional)</span></label>
+          <input type="text" id="hhLocation">
+        </div>
+        <div class="field">
+          <label class="field-label" for="hhTime">Start time <span class="optional">(optional)</span></label>
+          <input type="time" id="hhTime">
+        </div>
+      </div>
+
+      <!-- ── INTERNAL ─────────────────────────────────────── -->
+      <div id="internalSection" class="hidden">
+        <div class="field">
+          <label class="field-label">Meeting type</label>
+          <select id="internalSubtype">
+            <option value="Steering Committee">Steering Committee</option>
+            <option value="Advisory Committee">Advisory Committee</option>
+            <option value="Miscellaneous">Miscellaneous</option>
+          </select>
+        </div>
+        <div class="field hidden" id="internalEventNameField">
+          <label class="field-label" for="internalEventName">Event name</label>
+          <input type="text" id="internalEventName">
+        </div>
+        <div class="field">
+          <label class="check-label"><input type="checkbox" id="needsAgenda"><span>Agenda needed</span></label>
+        </div>
+        <div class="field">
+          <label class="check-label"><input type="checkbox" id="needsSlides"><span>Slides needed</span></label>
+        </div>
+      </div>
+
+      <!-- ── MISCELLANEOUS ────────────────────────────────── -->
+      <div id="miscSection" class="hidden">
+        <div class="review-note">All miscellaneous events are reviewed by the ERC team before tasks are generated.</div>
+        <div class="field">
+          <label class="field-label" for="miscTitle">Working title</label>
+          <input type="text" id="miscTitle">
+        </div>
+        <div class="field">
+          <label class="field-label">Internal or external?</label>
+          <div class="radio-group">
+            <label><input type="radio" name="miscType" value="Internal" checked> Internal</label>
+            <label><input type="radio" name="miscType" value="External"> External</label>
+          </div>
+          <p class="helper"><strong>Internal</strong> — ERC team only, nothing to publish.<br><strong>External</strong> — public event.</p>
+        </div>
+      </div>
+
+      <!-- ── EVENT DESCRIPTION ────────────────────────────── -->
+      <div id="descriptionField" class="field hidden">
+        <label class="field-label" for="eventDescription">Event description <span class="optional">(optional — 75 words max)</span></label>
+        <textarea id="eventDescription" rows="3"></textarea>
+        <div class="word-count" id="wordCount">0 / 75</div>
+      </div>
+
+      <!-- ── ZOOM ─────────────────────────────────────────── -->
+      <div id="zoomField" class="field hidden">
+        <label class="check-label"><input type="checkbox" id="hasZoom"><span>Zoom option</span></label>
+      </div>
+
+      <!-- ── FOOD ─────────────────────────────────────────── -->
+      <div id="foodField" class="field hidden">
+        <label class="field-label">Food order needed?</label>
+        <div class="radio-group">
+          <label><input type="radio" name="hasFood" value="yes"> Yes</label>
+          <label><input type="radio" name="hasFood" value="no" checked> No</label>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary full" id="submitBtn">Submit event</button>
+    </form>
+
+    <div id="status" class="status-msg"></div>
+  </div>
+</div>
+
+<script>
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_T8UyShcR4tTABICN8Z2U47XqC2IVT40h3EPG5-61MIwfOZXb0oHkXyQSZ_tq_V0X/exec";
+  const WORD_LIMIT = 75;
+
+  // ── Word counter ────────────────────────────────────────────
+  document.getElementById("eventDescription").addEventListener("input", function () {
+    const words = this.value.trim() === "" ? 0 : this.value.trim().split(/\s+/).length;
+    const el = document.getElementById("wordCount");
+    el.textContent = words + " / " + WORD_LIMIT;
+    el.classList.toggle("over", words > WORD_LIMIT);
+  });
+
+  // ── Speaker blocks ──────────────────────────────────────────
+  let speakerCount = 0;
+
+  function createSpeakerBlock() {
+    speakerCount++;
+    const idx = speakerCount;
+    const block = document.createElement("div");
+    block.className = "speaker-block";
+    block.dataset.idx = idx;
+    block.innerHTML = `
+      <div class="speaker-block-header">
+        <span class="speaker-label">Speaker ${idx}</span>
+        <button type="button" class="btn-ghost remove-speaker-btn">Remove</button>
+      </div>
+      <div class="field">
+        <label class="field-label">Name</label>
+        <input type="text" class="speaker-name" required>
+      </div>
+      <div class="field">
+        <label class="field-label">Texas A&amp;M affiliated?</label>
+        <div class="radio-group">
+          <label><input type="radio" name="speakerTamu_${idx}" value="yes"> Yes</label>
+          <label><input type="radio" name="speakerTamu_${idx}" value="no" checked> No</label>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label">Bio link <span class="optional">(optional)</span></label>
+        <input type="url" class="speaker-bio">
+      </div>
+    `;
+    block.querySelector(".remove-speaker-btn").addEventListener("click", function () {
+      block.remove(); renumberSpeakers(); updateRemoveButtons();
+    });
+    return block;
+  }
+
+  function renumberSpeakers() {
+    document.querySelectorAll(".speaker-block").forEach(function (b, i) {
+      b.querySelector(".speaker-label").textContent = "Speaker " + (i + 1);
+    });
+  }
+
+  function addSpeaker() {
+    document.getElementById("speakerList").appendChild(createSpeakerBlock());
+    updateRemoveButtons();
+  }
+
+  function updateRemoveButtons() {
+    const blocks = document.querySelectorAll(".speaker-block");
+    blocks.forEach(function (b) {
+      b.querySelector(".remove-speaker-btn").style.display = blocks.length > 1 ? "" : "none";
+    });
+  }
+
+  document.getElementById("addSpeakerBtn").addEventListener("click", addSpeaker);
+
+  // ── Internal subtype ────────────────────────────────────────
+  document.getElementById("internalSubtype").addEventListener("change", function () {
+    const nameField = document.getElementById("internalEventNameField");
+    const nameInput = document.getElementById("internalEventName");
+    const descField = document.getElementById("descriptionField");
+    const isMisc = this.value === "Miscellaneous";
+    nameField.classList.toggle("hidden", !isMisc);
+    nameInput.required = isMisc;
+    if (!isMisc) { nameInput.value = ""; descField.classList.add("hidden"); }
+    else descField.classList.remove("hidden");
+  });
+
+  // ── Show/hide sections ──────────────────────────────────────
+  function hideAll() {
+    ["speakerSection","happyHourSection","internalSection","miscSection",
+     "zoomField","foodField","descriptionField","internalEventNameField"]
+      .forEach(function (id) { document.getElementById(id).classList.add("hidden"); });
+    document.getElementById("mainDivider").classList.add("hidden");
+    const noFood = document.querySelector("input[name='hasFood'][value='no']");
+    if (noFood) noFood.checked = true;
+    document.getElementById("hasZoom").checked = false;
+    document.getElementById("needsAgenda").checked = false;
+    document.getElementById("needsSlides").checked = false;
+    document.getElementById("internalSubtype").value = "Steering Committee";
+    document.getElementById("internalEventName").required = false;
+    document.getElementById("internalEventName").value = "";
+  }
+
+  document.getElementById("eventType").addEventListener("change", function () {
+    hideAll();
+    document.getElementById("mainDivider").classList.remove("hidden");
+    switch (this.value) {
+      case "EdTalk":
+        document.getElementById("speakerSection").classList.remove("hidden");
+        document.getElementById("zoomField").classList.remove("hidden");
+        document.getElementById("foodField").classList.remove("hidden");
+        if (!document.querySelectorAll(".speaker-block").length) addSpeaker();
+        updateRemoveButtons();
+        break;
+      case "Happy Hour":
+        document.getElementById("happyHourSection").classList.remove("hidden");
+        break;
+      case "Internal":
+        document.getElementById("internalSection").classList.remove("hidden");
+        document.getElementById("zoomField").classList.remove("hidden");
+        document.getElementById("foodField").classList.remove("hidden");
+        break;
+      case "Misc":
+        document.getElementById("miscSection").classList.remove("hidden");
+        document.getElementById("foodField").classList.remove("hidden");
+        document.getElementById("descriptionField").classList.remove("hidden");
+        break;
+    }
+  });
+
+  // ── Error helpers ───────────────────────────────────────────
+  function markError(el) {
+    const f = el.closest(".field") || el.closest(".speaker-block");
+    if (f) f.classList.add("has-error");
+    el.addEventListener("input", function () {
+      const ff = el.closest(".field") || el.closest(".speaker-block");
+      if (ff) ff.classList.remove("has-error");
+    }, { once: true });
+  }
+
+  function clearErrors() {
+    document.querySelectorAll(".has-error").forEach(function (el) { el.classList.remove("has-error"); });
+  }
+
+  // ── Collect speakers ────────────────────────────────────────
+  function collectSpeakers() {
+    return Array.from(document.querySelectorAll(".speaker-block")).map(function (b) {
+      const r = b.querySelector("input[type='radio']:checked");
+      return { name: b.querySelector(".speaker-name").value.trim(), tamu: r ? r.value : "no", bioUrl: b.querySelector(".speaker-bio").value.trim() };
+    });
+  }
+
+  // ── Submit ──────────────────────────────────────────────────
+  document.getElementById("eventForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    clearErrors();
+
+    const eventType = document.getElementById("eventType").value;
+    const status    = document.getElementById("status");
+    const submitBtn = document.getElementById("submitBtn");
+    let hasError    = false;
+
+    if (!document.getElementById("eventDate").value) { markError(document.getElementById("eventDate")); hasError = true; }
+    if (eventType === "EdTalk") {
+      document.querySelectorAll(".speaker-name").forEach(function (i) { if (!i.value.trim()) { markError(i); hasError = true; } });
+    }
+    if (eventType === "Internal" && document.getElementById("internalSubtype").value === "Miscellaneous" && !document.getElementById("internalEventName").value.trim()) {
+      markError(document.getElementById("internalEventName")); hasError = true;
+    }
+    if (eventType === "Misc" && !document.getElementById("miscTitle").value.trim()) {
+      markError(document.getElementById("miscTitle")); hasError = true;
+    }
+    const descWords = document.getElementById("eventDescription").value.trim().split(/\s+/).filter(Boolean).length;
+    if (descWords > WORD_LIMIT) { markError(document.getElementById("eventDescription")); hasError = true; }
+
+    if (hasError) { status.textContent = "Please fill in the highlighted fields."; status.className = "status-msg error"; return; }
+
+    const foodRadio   = document.querySelector("input[name='hasFood']:checked");
+    const followRadio = document.querySelector("input[name='followsEvent']:checked");
+    const miscRadio   = document.querySelector("input[name='miscType']:checked");
+
+    const formData = {
+      action:            "submit",
+      eventType:         eventType,
+      eventDate:         document.getElementById("eventDate").value,
+      speakers:          eventType === "EdTalk" ? collectSpeakers() : [],
+      hasZoom:           (eventType === "EdTalk" || eventType === "Internal") && document.getElementById("hasZoom").checked,
+      followsEvent:      followRadio ? followRadio.value === "yes" : false,
+      location:          document.getElementById("hhLocation").value.trim(),
+      startTime:         document.getElementById("hhTime").value,
+      internalSubtype:   document.getElementById("internalSubtype").value,
+      internalEventName: document.getElementById("internalEventName").value.trim(),
+      needsAgenda:       document.getElementById("needsAgenda").checked,
+      needsSlides:       document.getElementById("needsSlides").checked,
+      miscTitle:         document.getElementById("miscTitle").value.trim(),
+      miscType:          miscRadio ? miscRadio.value : "",
+      description:       document.getElementById("eventDescription").value.trim(),
+      hasFood:           foodRadio ? foodRadio.value === "yes" : false,
+    };
+
+    submitBtn.disabled   = true;
+    submitBtn.textContent = "Submitting…";
+    status.className     = "status-msg";
+    status.style.display = "none";
+
+    fetch(APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify(formData) })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (res.error) throw new Error(res.error);
+        status.textContent = "Submitted! Kate will receive an approval email shortly.";
+        status.className   = "status-msg success";
+        document.getElementById("eventForm").reset();
+        hideAll();
+        speakerCount = 0;
+        document.getElementById("speakerList").innerHTML = "";
+        document.getElementById("eventType").value = "";
+        document.getElementById("mainDivider").classList.add("hidden");
+      })
+      .catch(function (err) {
+        status.textContent = "Something went wrong: " + err.message;
+        status.className   = "status-msg error";
+      })
+      .finally(function () {
+        submitBtn.disabled    = false;
+        submitBtn.textContent = "Submit event";
+      });
+  });
+</script>
+</body>
+</html>

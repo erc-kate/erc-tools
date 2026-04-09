@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Approve Event — ERC Event Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<div class="page-header">
+  <div>
+    <h1>Event Approval</h1>
+  </div>
+</div>
+
+<div class="page-body">
+
+  <!-- ── Password screen ──────────────────────────────────── -->
+  <div class="card" id="passwordCard">
+    <div class="field">
+      <label class="field-label" for="passwordInput">Enter password to continue</label>
+      <input type="password" id="passwordInput" autocomplete="current-password">
+    </div>
+    <button class="btn-primary" id="passwordBtn">Continue</button>
+    <div id="passwordError" class="status-msg error" style="margin-top:10px;"></div>
+  </div>
+
+  <!-- ── Approval screen (hidden until password ok) ────────── -->
+  <div id="approvalScreen" class="hidden">
+
+    <!-- Event summary -->
+    <div class="card" id="eventSummaryCard">
+      <h2 id="eventTitle" style="margin:0 0 16px; font-size:1.2rem;"></h2>
+      <dl class="event-meta" id="eventMeta"></dl>
+    </div>
+
+    <!-- Task checklist -->
+    <div class="card">
+      <h3 style="margin:0 0 4px;">Tasks to generate</h3>
+      <p style="font-size:13px; color:#999; margin:0 0 18px;">Uncheck any tasks that don't apply. Required tasks can't be removed.</p>
+
+      <div id="taskChecklist"></div>
+
+      <hr class="divider">
+      <button class="btn-primary full" id="approveBtn">Approve &amp; generate tasks</button>
+      <div id="approveStatus" class="status-msg"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_T8UyShcR4tTABICN8Z2U47XqC2IVT40h3EPG5-61MIwfOZXb0oHkXyQSZ_tq_V0X/exec";
+
+  const params  = new URLSearchParams(window.location.search);
+  const eventId = params.get("id");
+
+  let savedPassword = "";
+  let loadedTasks   = [];
+
+  // ── Password ─────────────────────────────────────────────
+  function checkPassword() {
+    const pw  = document.getElementById("passwordInput").value.trim();
+    const err = document.getElementById("passwordError");
+    const btn = document.getElementById("passwordBtn");
+    if (!pw) return;
+
+    btn.disabled = true;
+    btn.textContent = "Checking…";
+
+    post({ action: "verify_password", password: pw })
+      .then(function (res) {
+        if (res.success) {
+          savedPassword = pw;
+          document.getElementById("passwordCard").classList.add("hidden");
+          loadEvent();
+        } else {
+          err.textContent = res.error || "Incorrect password.";
+          err.className = "status-msg error";
+          btn.disabled = false;
+          btn.textContent = "Continue";
+        }
+      })
+      .catch(function (e) {
+        err.textContent = "Error: " + e.message;
+        err.className = "status-msg error";
+        btn.disabled = false;
+        btn.textContent = "Continue";
+      });
+  }
+
+  document.getElementById("passwordBtn").addEventListener("click", checkPassword);
+  document.getElementById("passwordInput").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") checkPassword();
+  });
+
+  // ── Load event ───────────────────────────────────────────
+  function loadEvent() {
+    post({ action: "get_pending", password: savedPassword, eventId: eventId })
+      .then(function (res) {
+        if (res.error) { showApproveError(res.error); return; }
+        renderEvent(res.event);
+        renderTasks(res.tasks);
+        loadedTasks = res.tasks;
+        document.getElementById("approvalScreen").classList.remove("hidden");
+      })
+      .catch(function (e) { showApproveError(e.message); });
+  }
+
+  // ── Render event summary ─────────────────────────────────
+  function renderEvent(event) {
+    document.getElementById("eventTitle").textContent = event.name;
+    const meta = document.getElementById("eventMeta");
+    const rows = [
+      ["Type",     event.type],
+      ["Date",     event.date],
+      ["Time",     event.time     || "—"],
+      ["Location", event.location || "—"],
+      ["Status",   event.status],
+    ];
+    meta.innerHTML = rows.map(function (r) {
+      return "<dt>" + r[0] + "</dt><dd>" + r[1] + "</dd>";
+    }).join("");
+  }
+
+  // ── Render task checklist ────────────────────────────────
+  function renderTasks(tasks) {
+    const container = document.getElementById("taskChecklist");
+    container.innerHTML = "";
+
+    // Group by category
+    const groups = {};
+    tasks.forEach(function (t) {
+      if (!groups[t.category]) groups[t.category] = [];
+      groups[t.category].push(t);
+    });
+
+    Object.keys(groups).forEach(function (cat) {
+      const group = document.createElement("div");
+      group.className = "category-group";
+
+      const title = document.createElement("div");
+      title.className = "category-title";
+      title.textContent = cat;
+      group.appendChild(title);
+
+      const list = document.createElement("ul");
+      list.className = "task-list";
+
+      groups[cat].forEach(function (t, i) {
+        const li = document.createElement("li");
+        li.className = "task-item" + (t.required ? " required-task" : "");
+
+        const cb = document.createElement("input");
+        cb.type    = "checkbox";
+        cb.checked = true;
+        cb.disabled = t.required;
+        cb.dataset.taskIdx = tasks.indexOf(t);
+
+        const body = document.createElement("div");
+        body.className = "task-item-body";
+
+        const name = document.createElement("div");
+        name.className = "task-item-name";
+        name.textContent = t.task;
+
+        const meta = document.createElement("div");
+        meta.className = "task-item-meta";
+        meta.textContent = (t.who || "") + (t.due < 0 ? "  ·  " + Math.abs(t.due) + " days before" : t.due === 0 ? "  ·  Day of" : "  ·  " + t.due + " day" + (t.due === 1 ? "" : "s") + " after");
+
+        body.appendChild(name);
+        body.appendChild(meta);
+
+        if (t.approvalNote) {
+          const note = document.createElement("div");
+          note.className = "task-item-note";
+          note.textContent = "⚠ " + t.approvalNote;
+          body.appendChild(note);
+        }
+
+        const badge = document.createElement("div");
+        badge.className = "task-required-badge";
+        badge.textContent = t.required ? "Required" : "";
+
+        li.appendChild(cb);
+        li.appendChild(body);
+        li.appendChild(badge);
+        list.appendChild(li);
+      });
+
+      group.appendChild(list);
+      container.appendChild(group);
+    });
+  }
+
+  // ── Approve ──────────────────────────────────────────────
+  document.getElementById("approveBtn").addEventListener("click", function () {
+    const btn    = document.getElementById("approveBtn");
+    const status = document.getElementById("approveStatus");
+
+    const approvedTasks = loadedTasks.filter(function (t, i) {
+      const cb = document.querySelector("input[data-task-idx='" + i + "']");
+      return cb && cb.checked;
+    });
+
+    btn.disabled    = true;
+    btn.textContent = "Generating tasks…";
+
+    post({
+      action:        "approve",
+      password:      savedPassword,
+      eventId:       eventId,
+      approvedTasks: approvedTasks,
+    })
+    .then(function (res) {
+      if (res.error) throw new Error(res.error);
+      status.textContent = "Done! Tasks have been added to the team sheet.";
+      status.className   = "status-msg success";
+      btn.disabled       = true;
+      btn.textContent    = "Approved ✓";
+    })
+    .catch(function (e) {
+      status.textContent = "Error: " + e.message;
+      status.className   = "status-msg error";
+      btn.disabled       = false;
+      btn.textContent    = "Approve & generate tasks";
+    });
+  });
+
+  // ── Helpers ──────────────────────────────────────────────
+  function post(data) {
+    return fetch(APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify(data) })
+      .then(function (r) { return r.json(); });
+  }
+
+  function showApproveError(msg) {
+    document.getElementById("approvalScreen").innerHTML =
+      '<div class="card"><p style="color:#8b0000;">Error: ' + msg + '</p></div>';
+    document.getElementById("approvalScreen").classList.remove("hidden");
+  }
+</script>
+</body>
+</html>
