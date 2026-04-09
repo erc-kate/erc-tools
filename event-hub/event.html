@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Event Tasks — ERC Event Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+  <style>
+    .page-body { max-width: 720px; }
+
+    .task-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .task-table th {
+      font-family: 'Work Sans', sans-serif; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em; color: #999;
+      text-align: left; padding: 8px 12px; border-bottom: 2px solid #eee;
+    }
+    .task-table td { padding: 10px 12px; border-bottom: 1px solid #f2f2f2; color: #444; vertical-align: top; }
+    .task-table tr:last-child td { border-bottom: none; }
+
+    .category-group { margin-bottom: 28px; }
+    .category-title {
+      font-family: 'Work Sans', sans-serif; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em; color: #999;
+      margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px solid #eee;
+    }
+
+    .chip {
+      display: inline-block; padding: 2px 8px; border-radius: 20px;
+      font-size: 11px; font-weight: 700; background: #eee; color: #555;
+      white-space: nowrap;
+    }
+    .chip-KB { background: #e8eaf6; color: #3949ab; }
+    .chip-CM { background: #fce4ec; color: #c2185b; }
+    .chip-AK { background: #e8f5e9; color: #388e3c; }
+
+    .due-date { white-space: nowrap; color: #777; }
+
+    .loading { text-align: center; padding: 40px; color: #bbb; font-size: 14px; }
+
+    .btn-row { display: flex; gap: 10px; margin-top: 8px; }
+    .btn-secondary {
+      background: none; border: 1px solid #ccc; border-radius: 5px;
+      padding: 8px 14px; font-family: 'Work Sans', sans-serif; font-size: 13px;
+      font-weight: 600; color: #555; cursor: pointer; text-decoration: none;
+      display: inline-block; transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-secondary:hover { border-color: #500000; color: #500000; }
+  </style>
+</head>
+<body>
+
+<div class="page-header">
+  <div style="flex:1;">
+    <a href="index.html">← Submit another event</a>
+    <h1 id="pageTitle">Event Tasks</h1>
+  </div>
+  <a href="dashboard.html" class="btn-secondary" style="color:rgba(255,255,255,0.8); border-color:rgba(255,255,255,0.4); font-size:12px; padding:6px 12px;">View all tasks</a>
+</div>
+
+<div class="page-body">
+
+  <div id="loadingState" class="card loading">Loading event…</div>
+
+  <div id="eventContent" class="hidden">
+
+    <!-- Event summary -->
+    <div class="card">
+      <h2 id="eventName" style="margin:0 0 14px; font-size:1.15rem;"></h2>
+      <dl class="event-meta" id="eventMeta"></dl>
+    </div>
+
+    <!-- Tasks by category -->
+    <div class="card" id="tasksCard">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+        <h3 style="margin:0; font-size:1rem;">Tasks</h3>
+      </div>
+      <div id="taskGroups"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_T8UyShcR4tTABICN8Z2U47XqC2IVT40h3EPG5-61MIwfOZXb0oHkXyQSZ_tq_V0X/exec";
+
+  const params  = new URLSearchParams(window.location.search);
+  const eventId = params.get("id");
+
+  if (!eventId) {
+    document.getElementById("loadingState").textContent = "No event specified.";
+  } else {
+    fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: "get_event_tasks", eventId: eventId })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (res) {
+      if (res.error) throw new Error(res.error);
+      renderEvent(res.event);
+      renderTasks(res.tasks);
+      document.getElementById("loadingState").classList.add("hidden");
+      document.getElementById("eventContent").classList.remove("hidden");
+    })
+    .catch(function (e) {
+      document.getElementById("loadingState").textContent = "Error loading event: " + e.message;
+    });
+  }
+
+  function renderEvent(event) {
+    document.getElementById("pageTitle").textContent  = event.name;
+    document.getElementById("eventName").textContent  = event.name;
+
+    const rows = [
+      ["Type",     event.type],
+      ["Date",     event.date],
+    ];
+    if (event.time)     rows.push(["Time",     event.time]);
+    if (event.location) rows.push(["Location", event.location]);
+
+    document.getElementById("eventMeta").innerHTML = rows.map(function (r) {
+      return "<dt>" + esc(r[0]) + "</dt><dd>" + esc(r[1]) + "</dd>";
+    }).join("");
+  }
+
+  function renderTasks(tasks) {
+    const container = document.getElementById("taskGroups");
+    container.innerHTML = "";
+
+    if (!tasks.length) {
+      container.innerHTML = '<p style="color:#bbb; font-size:13px;">No tasks found.</p>';
+      return;
+    }
+
+    // Group by category
+    const groups = {};
+    const order  = [];
+    tasks.forEach(function (t) {
+      if (!groups[t.category]) { groups[t.category] = []; order.push(t.category); }
+      groups[t.category].push(t);
+    });
+
+    order.forEach(function (cat) {
+      const group = document.createElement("div");
+      group.className = "category-group";
+
+      const title = document.createElement("div");
+      title.className = "category-title";
+      title.textContent = cat;
+      group.appendChild(title);
+
+      const table = document.createElement("table");
+      table.className = "task-table";
+      table.innerHTML =
+        "<thead><tr><th>Task</th><th>Who</th><th>Due</th></tr></thead>";
+
+      const tbody = document.createElement("tbody");
+      groups[cat].forEach(function (t) {
+        const tr = document.createElement("tr");
+        tr.innerHTML =
+          "<td>" + esc(t.task) + (t.note ? '<div style="font-size:11px;color:#aaa;margin-top:3px;">' + esc(t.note) + "</div>" : "") + "</td>" +
+          '<td><span class="chip chip-' + esc(t.initials) + '">' + esc(t.initials) + "</span></td>" +
+          '<td class="due-date">' + esc(t.dueDate) + "</td>";
+        tbody.appendChild(tr);
+      });
+
+      table.appendChild(tbody);
+      group.appendChild(table);
+      container.appendChild(group);
+    });
+  }
+
+  function esc(str) {
+    return (str || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+</script>
+</body>
+</html>

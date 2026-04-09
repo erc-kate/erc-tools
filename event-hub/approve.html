@@ -169,12 +169,7 @@
         name.className = "task-item-name";
         name.textContent = t.task;
 
-        const meta = document.createElement("div");
-        meta.className = "task-item-meta";
-        meta.textContent = (t.who || "") + (t.due < 0 ? "  ·  " + Math.abs(t.due) + " days before" : t.due === 0 ? "  ·  Day of" : "  ·  " + t.due + " day" + (t.due === 1 ? "" : "s") + " after");
-
         body.appendChild(name);
-        body.appendChild(meta);
 
         if (t.approvalNote) {
           const note = document.createElement("div");
@@ -219,10 +214,8 @@
     })
     .then(function (res) {
       if (res.error) throw new Error(res.error);
-      status.textContent = "Done! Tasks have been added to the team sheet.";
-      status.className   = "status-msg success";
-      btn.disabled       = true;
-      btn.textContent    = "Approved ✓";
+      btn.textContent = "Approved ✓";
+      window.location.href = "event.html?id=" + encodeURIComponent(eventId);
     })
     .catch(function (e) {
       status.textContent = "Error: " + e.message;
