@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — ERC Event Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;700&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 15px; background: #f5f5f5; color: #1a1a1a;
+      min-height: 100vh; display: flex; flex-direction: column;
+    }
+    .hidden { display: none !important; }
+
+    /* ── Header ──────────────────────────────────────────────── */
+    .page-header {
+      background: #500000; color: #fff;
+      padding: 20px 24px 16px; flex-shrink: 0;
+    }
+    .page-header-inner { display: flex; align-items: center; gap: 12px; }
+    .back-link {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 0.8rem; color: rgba(255,255,255,0.65); text-decoration: none; margin-bottom: 8px;
+    }
+    .back-link:hover { color: #fff; }
+    .page-header h1 {
+      font-family: 'Work Sans', sans-serif; font-size: 1.3rem; font-weight: 700;
+    }
+    .header-badge {
+      font-size: 0.7rem; font-weight: 700; padding: 3px 9px; border-radius: 10px;
+      background: rgba(255,255,255,0.2); color: #fff; letter-spacing: 0.04em;
+      text-transform: uppercase; position: relative; top: -1px;
+    }
+
+    /* ── Tabs ────────────────────────────────────────────────── */
+    .tab-bar {
+      background: #3a0000; display: flex; gap: 0; padding: 0 24px; flex-shrink: 0;
+    }
+    .tab-btn {
+      font-family: 'Open Sans', sans-serif; font-size: 0.8rem; font-weight: 600;
+      color: rgba(255,255,255,0.6); background: none; border: none; cursor: pointer;
+      padding: 10px 18px; border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s; white-space: nowrap;
+    }
+    .tab-btn:hover { color: rgba(255,255,255,0.85); }
+    .tab-btn.active { color: #fff; border-bottom-color: #fff; }
+    .tab-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 16px; height: 16px; border-radius: 50%; font-size: 0.65rem;
+      background: rgba(255,255,255,0.25); color: #fff; font-weight: 700;
+      margin-left: 6px;
+    }
+    .tab-btn.active .tab-badge { background: rgba(255,255,255,0.35); }
+
+    /* ── Two-panel layout ────────────────────────────────────── */
+    .admin-layout {
+      display: flex; flex: 1; min-height: 0; overflow: hidden;
+    }
+
+    /* ── Sidebar ─────────────────────────────────────────────── */
+    .sidebar {
+      width: 270px; flex-shrink: 0; background: #fff;
+      border-right: 1px solid #e0e0e0; overflow-y: auto;
+      display: flex; flex-direction: column;
+    }
+    .sidebar-inner { flex: 1; }
+    .sidebar-empty {
+      padding: 32px 16px; text-align: center; color: #bbb; font-size: 0.82rem;
+    }
+    .sidebar-loading {
+      padding: 24px 16px; text-align: center; color: #bbb; font-size: 0.82rem;
+    }
+
+    .event-item {
+      padding: 12px 16px; border-bottom: 1px solid #f0f0f0; cursor: pointer;
+      transition: background 0.12s; display: flex; flex-direction: column; gap: 3px;
+    }
+    .event-item:hover { background: #faf7f7; }
+    .event-item.selected { background: #f5e8e8; border-left: 3px solid #500000; }
+    .event-item.selected .event-item-name { color: #500000; }
+    .event-item-name {
+      font-family: 'Work Sans', sans-serif; font-size: 0.85rem; font-weight: 600;
+      color: #1a1a1a; line-height: 1.3;
+    }
+    .event-item-meta {
+      font-size: 0.72rem; color: #999; display: flex; gap: 6px; flex-wrap: wrap;
+    }
+    .event-item-type {
+      font-size: 0.68rem; font-weight: 600; padding: 1px 6px; border-radius: 3px;
+      background: #f5e8e8; color: #500000;
+    }
+
+    /* ── Detail panel ────────────────────────────────────────── */
+    .detail-panel {
+      flex: 1; overflow-y: auto; background: #f5f5f5; padding: 22px 24px;
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .detail-empty {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      text-align: center; color: #bbb; font-size: 0.9rem; padding: 40px;
+    }
+    .detail-empty-icon {
+      font-size: 2.5rem; margin-bottom: 12px; opacity: 0.3;
+    }
+
+    /* ── Detail loading ──────────────────────────────────────── */
+    .detail-loading {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      color: #bbb; font-size: 0.88rem;
+    }
+
+    /* ── Card ────────────────────────────────────────────────── */
+    .card {
+      background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;
+      padding: 20px 22px; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .card-title {
+      font-family: 'Work Sans', sans-serif; font-size: 0.7rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.07em; color: #aaa;
+      margin-bottom: 14px;
+    }
+
+    /* ── Event header in detail ──────────────────────────────── */
+    .detail-event-header {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    }
+    .detail-event-name {
+      font-family: 'Work Sans', sans-serif; font-size: 1.15rem; font-weight: 700;
+      color: #1a1a1a; line-height: 1.3; flex: 1;
+    }
+    .detail-event-chips {
+      display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;
+    }
+    .chip {
+      font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 3px;
+      background: #f0f0f0; color: #555;
+    }
+    .chip.type { background: #f5e8e8; color: #500000; }
+
+    /* ── Sub-tabs (Upcoming Events detail) ───────────────────── */
+    .sub-tab-bar {
+      display: flex; gap: 0; border-bottom: 2px solid #e8e8e8; margin-bottom: 18px;
+    }
+    .sub-tab {
+      font-family: 'Open Sans', sans-serif; font-size: 0.78rem; font-weight: 600;
+      color: #999; background: none; border: none; cursor: pointer;
+      padding: 7px 14px; border-bottom: 2px solid transparent; margin-bottom: -2px;
+      transition: color 0.14s, border-color 0.14s;
+    }
+    .sub-tab:hover { color: #500000; }
+    .sub-tab.active { color: #500000; border-bottom-color: #500000; }
+    .sub-pane { display: none; }
+    .sub-pane.active { display: block; }
+
+    /* ── Info fields ─────────────────────────────────────────── */
+    .info-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px;
+    }
+    .info-grid.single { grid-template-columns: 1fr; }
+    .info-field { display: flex; flex-direction: column; gap: 4px; }
+    .info-label {
+      font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.05em; color: #999;
+    }
+    .info-value {
+      font-size: 0.875rem; color: #1a1a1a; line-height: 1.5;
+      background: #fafafa; border: 1px solid #e8e8e8; border-radius: 5px;
+      padding: 7px 10px; outline: none;
+      font-family: 'Open Sans', sans-serif;
+      transition: border-color 0.15s, background 0.15s;
+      min-height: 34px;
+    }
+    .info-value[contenteditable="true"]:hover { background: #fff; border-color: #ccc; }
+    .info-value[contenteditable="true"]:focus { background: #fff; border-color: #500000; }
+    .info-value.bool { background: none; border-color: transparent; padding: 7px 0; }
+    .save-bar {
+      display: flex; align-items: center; gap: 12px; margin-top: 16px;
+      padding-top: 14px; border-top: 1px solid #f0f0f0;
+    }
+    .save-btn {
+      font-family: inherit; font-size: 0.82rem; font-weight: 700;
+      background: #500000; color: #fff; border: none; border-radius: 5px;
+      padding: 8px 18px; cursor: pointer; transition: background 0.15s;
+    }
+    .save-btn:hover:not(:disabled) { background: #3a0000; }
+    .save-btn:disabled { background: #bbb; cursor: not-allowed; }
+    .save-msg { font-size: 0.78rem; }
+    .save-msg.success { color: #1a6b3c; }
+    .save-msg.error { color: #8b1a1a; }
+
+    /* ── Task list (detail) ──────────────────────────────────── */
+    .task-section-hdr {
+      font-family: 'Work Sans', sans-serif; font-size: 0.68rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.07em; color: #bbb;
+      padding: 10px 0 6px; border-bottom: 1px solid #eee; margin-bottom: 2px;
+    }
+    .task-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 2px; border-bottom: 1px solid #f5f5f5;
+    }
+    .task-row:last-child { border-bottom: none; }
+    .task-check {
+      width: 15px; height: 15px; accent-color: #500000; cursor: pointer; flex-shrink: 0;
+    }
+    .task-label {
+      flex: 1; font-size: 0.84rem; color: #1a1a1a; line-height: 1.4;
+    }
+    .task-label-done { text-decoration: line-through; color: #bbb; }
+    .task-note { font-size: 0.73rem; color: #999; margin-top: 2px; }
+    .task-meta { font-size: 0.7rem; color: #bbb; white-space: nowrap; flex-shrink: 0; }
+
+    /* ── Assign dropdown ─────────────────────────────────────── */
+    .task-assign {
+      font-family: inherit; font-size: 0.75rem; font-weight: 600;
+      border: 1.5px solid #ddd; border-radius: 4px; padding: 2px 5px;
+      background: #fff; color: #333; cursor: pointer; outline: none;
+      transition: border-color 0.15s; flex-shrink: 0;
+    }
+    .task-assign:focus { border-color: #500000; }
+    .task-assign.assign-KB { background: #fce8e8; color: #7a0000; border-color: #f5c0c0; }
+    .task-assign.assign-AK { background: #e8f5e8; color: #1a5c1a; border-color: #b2dfb2; }
+    .task-assign.assign-GA { background: #f5e8ff; color: #5c1a8f; border-color: #d8b2f5; }
+
+    /* ── Promo tab ───────────────────────────────────────────── */
+    .promo-section { margin-bottom: 22px; }
+    .promo-section:last-child { margin-bottom: 0; }
+    .promo-section-title {
+      font-family: 'Work Sans', sans-serif; font-size: 0.7rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.07em; color: #aaa; margin-bottom: 10px;
+    }
+    .promo-channel {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 0; border-bottom: 1px solid #f5f5f5;
+    }
+    .promo-channel:last-child { border-bottom: none; }
+    .promo-check {
+      width: 15px; height: 15px; accent-color: #500000; cursor: pointer; flex-shrink: 0;
+    }
+    .promo-channel-label {
+      flex: 1; font-size: 0.84rem; color: #1a1a1a;
+    }
+    .promo-channel-label.done { text-decoration: line-through; color: #bbb; }
+    .promo-link {
+      display: flex; align-items: center; gap: 10px;
+      padding: 7px 0; border-bottom: 1px solid #f5f5f5;
+    }
+    .promo-link:last-child { border-bottom: none; }
+    .promo-link-label {
+      font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.04em; color: #aaa; width: 70px; flex-shrink: 0;
+    }
+    .promo-link-input {
+      flex: 1; font-family: inherit; font-size: 0.82rem; color: #1a1a1a;
+      padding: 5px 8px; border: 1px solid #e8e8e8; border-radius: 4px;
+      outline: none; background: #fafafa; transition: border-color 0.15s, background 0.15s;
+    }
+    .promo-link-input:focus { border-color: #500000; background: #fff; }
+    .promo-link-open {
+      font-size: 0.78rem; color: #500000; text-decoration: none; flex-shrink: 0;
+      opacity: 0; transition: opacity 0.15s;
+    }
+    .promo-link:hover .promo-link-open { opacity: 1; }
+
+    /* ── Approve section ─────────────────────────────────────── */
+    .approve-note {
+      font-size: 0.8rem; color: #888; margin-bottom: 14px; line-height: 1.5;
+    }
+    .approve-actions {
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+      margin-top: 4px;
+    }
+    .approve-btn {
+      font-family: inherit; font-size: 0.9rem; font-weight: 700;
+      background: #500000; color: #fff; border: none; border-radius: 6px;
+      padding: 10px 26px; cursor: pointer; transition: background 0.15s;
+    }
+    .approve-btn:hover:not(:disabled) { background: #3a0000; }
+    .approve-btn:disabled { background: #aaa; cursor: not-allowed; }
+    .approve-msg { font-size: 0.82rem; }
+    .approve-msg.success { color: #1a6b3c; }
+    .approve-msg.error { color: #8b1a1a; }
+
+    /* ── Email modal ─────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 200; padding: 20px;
+    }
+    .modal-box {
+      background: #fff; border-radius: 10px; padding: 26px 26px 22px;
+      max-width: 400px; width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    }
+    .modal-title {
+      font-family: 'Work Sans', sans-serif; font-size: 1rem; font-weight: 700;
+      color: #1a1a1a; margin-bottom: 5px;
+    }
+    .modal-desc { font-size: 0.8rem; color: #888; margin-bottom: 18px; line-height: 1.5; }
+    .modal-field { margin-bottom: 12px; }
+    .modal-field:last-of-type { margin-bottom: 0; }
+    .modal-field label {
+      display: block; font-size: 0.7rem; font-weight: 600; color: #666;
+      margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .modal-field input[type="email"] {
+      width: 100%; font-family: inherit; font-size: 0.88rem; color: #1a1a1a;
+      padding: 7px 9px; border: 1px solid #ccc; border-radius: 5px; outline: none;
+      transition: border-color 0.15s;
+    }
+    .modal-field input[type="email"]:focus { border-color: #500000; }
+    .modal-actions {
+      display: flex; gap: 10px; align-items: center; margin-top: 20px;
+    }
+    .modal-send-btn {
+      font-family: inherit; font-size: 0.88rem; font-weight: 700;
+      background: #500000; color: #fff; border: none; border-radius: 6px;
+      padding: 9px 22px; cursor: pointer; transition: background 0.15s;
+    }
+    .modal-send-btn:hover:not(:disabled) { background: #3a0000; }
+    .modal-send-btn:disabled { background: #aaa; cursor: not-allowed; }
+    .modal-cancel-btn {
+      font-family: inherit; font-size: 0.82rem; color: #888;
+      background: none; border: none; cursor: pointer; padding: 0;
+    }
+    .modal-cancel-btn:hover { color: #500000; }
+
+    /* ── Responsive ──────────────────────────────────────────── */
+    @media (max-width: 700px) {
+      .admin-layout { flex-direction: column; overflow: visible; }
+      .sidebar { width: 100%; height: auto; border-right: none; border-bottom: 1px solid #e0e0e0; }
+      .detail-panel { padding: 16px; }
+      .info-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="page-header">
+  <a href="index.html" class="back-link">&larr; Event Hub</a>
+  <div class="page-header-inner">
+    <h1>ERC Event Hub <span class="header-badge">Admin</span></h1>
+  </div>
+</header>
+
+<!-- Tabs -->
+<div class="tab-bar">
+  <button class="tab-btn active" id="tabPending" onclick="switchTab('pending')">
+    Pending Approval <span class="tab-badge" id="pendingCount">0</span>
+  </button>
+  <button class="tab-btn" id="tabUpcoming" onclick="switchTab('upcoming')">
+    Upcoming Events <span class="tab-badge" id="upcomingCount">0</span>
+  </button>
+</div>
+
+<!-- Layout -->
+<div class="admin-layout">
+
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-inner" id="sidebarInner">
+      <div class="sidebar-loading">Loading...</div>
+    </div>
+  </div>
+
+  <!-- Detail panel -->
+  <div class="detail-panel" id="detailPanel">
+    <div class="detail-empty" id="detailEmpty">
+      <div>
+        <div class="detail-empty-icon">&#128197;</div>
+        <div>Select an event to view details</div>
+      </div>
+    </div>
+
+    <!-- Pending detail (hidden by default) -->
+    <div id="pendingDetail" class="hidden"></div>
+
+    <!-- Upcoming detail (hidden by default) -->
+    <div id="upcomingDetail" class="hidden"></div>
+
+    <!-- Loading -->
+    <div class="detail-loading hidden" id="detailLoading">Loading event...</div>
+  </div>
+
+</div>
+
+<!-- Email modal -->
+<div class="modal-overlay hidden" id="emailModal">
+  <div class="modal-box">
+    <div class="modal-title">Notify Your Team</div>
+    <div class="modal-desc">Optionally enter email addresses to notify each person of their tasks. Leave blank to skip.</div>
+    <div class="modal-field">
+      <label>Kate B. (KB)</label>
+      <input type="email" id="emailKB" value="katebarnes@tamu.edu">
+    </div>
+    <div class="modal-field">
+      <label>Andy K. (AK) <span style="font-weight:400;color:#ccc;font-size:0.68rem;">optional</span></label>
+      <input type="email" id="emailAK" placeholder="akwok@tamu.edu" autocomplete="off">
+    </div>
+    <div class="modal-field">
+      <label>Grad Ambassador (GA) <span style="font-weight:400;color:#ccc;font-size:0.68rem;">optional</span></label>
+      <input type="email" id="emailGA" placeholder="gradambassador@tamu.edu" autocomplete="off">
+    </div>
+    <div class="modal-actions">
+      <button class="modal-send-btn" id="modalSendBtn">Send &amp; Generate Tasks</button>
+      <button class="modal-cancel-btn" id="modalCancelBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// admin.html — ERC Event Hub
+// Internal admin interface for Kate. Two-tab layout:
+//   • Pending Approval — review submitted events, tweak task
+//     assignments, then approve → generates tasks + emails team
+//   • Upcoming Events  — edit event info (name/date/time/
+//     location/description), manage tasks, update promo assets
+//
+// Backend: Apps Script doPost
+//   get_pending_list, get_pending, approve,
+//   get_upcoming_events, get_event_tasks,
+//   update_event, update_assignments
+// ============================================================
+
+// ============================================================
+// CONFIG
+// ============================================================
+var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_T8UyShcR4tTABICN8Z2U47XqC2IVT40h3EPG5-61MIwfOZXb0oHkXyQSZ_tq_V0X/exec";
+
+var CAT_ORDER = ["Logistics", "Promo", "Food", "Wrap-up"];
+var WHO_MAP = { kate: "KB", clarence: "GA", andy: "AK", ga: "GA", minutes: "GA" };
+var PROMO_CHANNELS = ["Email to mailing list", "Instagram post", "Flyer in building", "Digital signage", "LinkedIn post", "Slack / Teams announcement"];
+
+// ============================================================
+// STATE
+// ============================================================
+var activeTab       = "pending";
+var selectedEventId = null;
+var pendingEvents   = [];
+var upcomingEvents  = [];
+var currentTasks    = [];   // tasks for currently-selected event
+var currentEvent    = null; // event object for currently-selected event
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener("DOMContentLoaded", function() {
+  loadPendingList();
+  loadUpcomingList();
+  document.getElementById("modalCancelBtn").addEventListener("click", closeEmailModal);
+  document.getElementById("modalSendBtn").addEventListener("click", sendAndGenerate);
+});
+
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById("tabPending").classList.toggle("active", tab === "pending");
+  document.getElementById("tabUpcoming").classList.toggle("active", tab === "upcoming");
+  selectedEventId = null;
+  renderSidebar();
+  clearDetail();
+}
+
+// ============================================================
+// LOAD LISTS
+// ============================================================
+function loadPendingList() {
+  post({ action: "get_pending_list" }).then(function(res) {
+    if (res.error) { pendingEvents = []; }
+    else { pendingEvents = res.pending || []; }  // backend returns "pending" key
+    document.getElementById("pendingCount").textContent = pendingEvents.length;
+    if (activeTab === "pending") renderSidebar();
+  }).catch(function() {
+    pendingEvents = [];
+    if (activeTab === "pending") renderSidebar();
+  });
+}
+
+function loadUpcomingList() {
+  post({ action: "get_upcoming_events" }).then(function(res) {
+    if (res.error) { upcomingEvents = []; }
+    else { upcomingEvents = res.events || []; }
+    document.getElementById("upcomingCount").textContent = upcomingEvents.length;
+    if (activeTab === "upcoming") renderSidebar();
+  }).catch(function() {
+    upcomingEvents = [];
+    if (activeTab === "upcoming") renderSidebar();
+  });
+}
+
+// ============================================================
+// SIDEBAR RENDER
+// ============================================================
+function renderSidebar() {
+  var list = activeTab === "pending" ? pendingEvents : upcomingEvents;
+  var inner = document.getElementById("sidebarInner");
+  inner.innerHTML = "";
+
+  if (!list.length) {
+    inner.innerHTML = '<div class="sidebar-empty">' +
+      (activeTab === "pending" ? "No events pending approval." : "No upcoming events.") +
+      '</div>';
+    return;
+  }
+
+  list.forEach(function(ev) {
+    var evId = ev.id || ev.eventId;  // backend uses "id"
+    var item = document.createElement("div");
+    item.className = "event-item" + (evId === selectedEventId ? " selected" : "");
+    item.setAttribute("data-id", evId);
+
+    var dateStr = formatDateShort(ev.date || ev.eventDate);
+
+    item.innerHTML =
+      '<div class="event-item-name">' + esc(ev.name || ev.eventName) + '</div>' +
+      '<div class="event-item-meta">' +
+        (ev.type || ev.eventType ? '<span class="event-item-type">' + esc(ev.type || ev.eventType) + '</span>' : '') +
+        '<span>' + esc(dateStr) + '</span>' +
+      '</div>';
+
+    item.addEventListener("click", function() { selectEvent(evId); });
+    inner.appendChild(item);
+  });
+}
+
+// ============================================================
+// SELECT EVENT
+// ============================================================
+function selectEvent(eventId) {
+  if (selectedEventId === eventId) return;
+  selectedEventId = eventId;
+
+  // Update sidebar selection
+  document.querySelectorAll(".event-item").forEach(function(el) {
+    el.classList.toggle("selected", el.getAttribute("data-id") === eventId);
+    var name = el.querySelector(".event-item-name");
+    if (name) name.style.color = el.classList.contains("selected") ? "#500000" : "";
+  });
+
+  clearDetail();
+  document.getElementById("detailLoading").classList.remove("hidden");
+
+  if (activeTab === "pending") {
+    loadPendingDetail(eventId);
+  } else {
+    loadUpcomingDetail(eventId);
+  }
+}
+
+function clearDetail() {
+  document.getElementById("detailEmpty").classList.add("hidden");
+  document.getElementById("detailLoading").classList.add("hidden");
+  document.getElementById("pendingDetail").classList.add("hidden");
+  document.getElementById("pendingDetail").innerHTML = "";
+  document.getElementById("upcomingDetail").classList.add("hidden");
+  document.getElementById("upcomingDetail").innerHTML = "";
+  currentTasks = [];
+  currentEvent = null;
+}
+
+// ============================================================
+// PENDING DETAIL
+// ============================================================
+function loadPendingDetail(eventId) {
+  post({ action: "get_pending", eventId: eventId }).then(function(res) {
+    document.getElementById("detailLoading").classList.add("hidden");
+    if (res.error) {
+      showDetailError(res.error);
+      return;
+    }
+    currentEvent = res.event;
+    currentTasks = (res.tasks || []).map(function(t, i) {
+      t._idx     = i;
+      t._checked = true;
+      t._assign  = normalizeWho(t.who);
+      return t;
+    });
+    renderPendingDetail();
+  }).catch(function(err) {
+    document.getElementById("detailLoading").classList.add("hidden");
+    showDetailError(err.message);
+  });
+}
+
+function renderPendingDetail() {
+  var ev = currentEvent;
+  var tasks = currentTasks;
+  var container = document.getElementById("pendingDetail");
+  container.innerHTML = "";
+
+  // Event summary card
+  var summaryCard = document.createElement("div");
+  summaryCard.className = "card";
+  var dateStr = formatDateLong(ev.date || ev.eventDate);
+  summaryCard.innerHTML =
+    '<div class="card-title">Event Details</div>' +
+    '<div class="detail-event-name">' + esc(ev.name || ev.eventName) + '</div>' +
+    '<div class="detail-event-chips">' +
+      (ev.type || ev.eventType ? '<span class="chip type">' + esc(ev.type || ev.eventType) + '</span>' : '') +
+      '<span class="chip">' + esc(dateStr) + '</span>' +
+      (ev.time     ? '<span class="chip">' + esc(ev.time) + '</span>' : '') +
+      (ev.location ? '<span class="chip">' + esc(ev.location) + '</span>' : '') +
+    '</div>';
+  container.appendChild(summaryCard);
+
+  // Tasks card
+  var tasksCard = document.createElement("div");
+  tasksCard.className = "card";
+  tasksCard.innerHTML =
+    '<div class="card-title">Tasks to Generate</div>' +
+    '<p class="approve-note">All tasks are checked by default. Uncheck any that don\'t apply for this event. Use the dropdowns to adjust assignments.</p>' +
+    '<div id="pendingTaskList"></div>' +
+    '<div class="approve-actions">' +
+      '<button class="approve-btn" id="approveBtn">Approve &amp; Generate Tasks</button>' +
+      '<span class="approve-msg" id="approveMsg"></span>' +
+    '</div>';
+  container.appendChild(tasksCard);
+
+  container.classList.remove("hidden");
+  renderTaskList(tasks, "pendingTaskList");
+
+  document.getElementById("approveBtn").addEventListener("click", function() {
+    var approved = currentTasks.filter(function(t) { return t._checked; });
+    if (!approved.length) {
+      var msg = document.getElementById("approveMsg");
+      msg.textContent = "Please keep at least one task checked.";
+      msg.className = "approve-msg error";
+      return;
+    }
+    document.getElementById("approveMsg").textContent = "";
+    openEmailModal();
+  });
+}
+
+function renderTaskList(tasks, containerId) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = "";
+
+  var groups = {};
+  tasks.forEach(function(t) {
+    if (!groups[t.category]) groups[t.category] = [];
+    groups[t.category].push(t);
+  });
+
+  var order = CAT_ORDER.concat(
+    Object.keys(groups).filter(function(c) { return CAT_ORDER.indexOf(c) === -1; })
+  );
+
+  order.forEach(function(cat) {
+    if (!groups[cat] || !groups[cat].length) return;
+    var hdr = document.createElement("div");
+    hdr.className = "task-section-hdr";
+    hdr.textContent = cat + " (" + groups[cat].length + ")";
+    container.appendChild(hdr);
+
+    groups[cat].forEach(function(t) {
+      var row = document.createElement("div");
+      row.className = "task-row";
+
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.className = "task-check";
+      cb.checked = t._checked !== false;
+
+      var labelWrap = document.createElement("div");
+      labelWrap.className = "task-label";
+      labelWrap.innerHTML = esc(t.task) +
+        (t.note ? '<div class="task-note">' + esc(t.note) + '</div>' : '');
+
+      var sel = makeAssignDropdown(t);
+
+      var dueLabel = t.due === 0 ? "Day of" : t.due > 0 ? "E+" + t.due : "E" + t.due;
+      var meta = document.createElement("span");
+      meta.className = "task-meta";
+      meta.textContent = dueLabel;
+
+      cb.addEventListener("change", function() {
+        t._checked = this.checked;
+        labelWrap.classList.toggle("task-label-done", !this.checked);
+      });
+      labelWrap.addEventListener("click", function() {
+        cb.checked = !cb.checked; cb.dispatchEvent(new Event("change"));
+      });
+
+      row.appendChild(cb);
+      row.appendChild(labelWrap);
+      row.appendChild(sel);
+      row.appendChild(meta);
+      container.appendChild(row);
+    });
+  });
+}
+
+// ============================================================
+// EMAIL MODAL
+// ============================================================
+function openEmailModal() {
+  document.getElementById("emailModal").classList.remove("hidden");
+  document.getElementById("emailKB").focus();
+}
+function closeEmailModal() {
+  document.getElementById("emailModal").classList.add("hidden");
+}
+
+function sendAndGenerate() {
+  var emailKB = document.getElementById("emailKB").value.trim();
+  var emailAK = document.getElementById("emailAK").value.trim();
+  var emailGA = document.getElementById("emailGA").value.trim();
+
+  var btn = document.getElementById("modalSendBtn");
+  btn.disabled = true;
+  btn.textContent = "Generating...";
+
+  var approved = currentTasks.filter(function(t) { return t._checked; })
+    .map(function(t) { return Object.assign({}, t, { assignedTo: t._assign }); });
+
+  post({
+    action:        "approve",
+    eventId:       selectedEventId,
+    approvedTasks: approved,
+    emails:        { KB: emailKB, AK: emailAK, GA: emailGA },
+  }).then(function(res) {
+    if (res.error) throw new Error(res.error);
+    closeEmailModal();
+    btn.disabled = false;
+    btn.textContent = "Send & Generate Tasks";
+
+    var msg = document.getElementById("approveMsg");
+    msg.textContent = "Tasks generated! Emails sent.";
+    msg.className = "approve-msg success";
+
+    // Remove from pending list and refresh
+    pendingEvents = pendingEvents.filter(function(ev) { return (ev.id || ev.eventId) !== selectedEventId; });
+    document.getElementById("pendingCount").textContent = pendingEvents.length;
+    selectedEventId = null;
+    renderSidebar();
+    clearDetail();
+    document.getElementById("detailEmpty").classList.remove("hidden");
+
+    // Refresh upcoming to show newly approved event
+    loadUpcomingList();
+  }).catch(function(err) {
+    alert("Error: " + err.message);
+    btn.disabled = false;
+    btn.textContent = "Send & Generate Tasks";
+  });
+}
+
+// ============================================================
+// UPCOMING DETAIL
+// ============================================================
+function loadUpcomingDetail(eventId) {
+  var ev = upcomingEvents.find(function(e) { return (e.id || e.eventId) === eventId; });
+  if (!ev) {
+    document.getElementById("detailLoading").classList.add("hidden");
+    showDetailError("Event not found.");
+    return;
+  }
+  currentEvent = ev;
+
+  // Load tasks for this event
+  post({ action: "get_event_tasks", eventId: eventId }).then(function(res) {
+    document.getElementById("detailLoading").classList.add("hidden");
+    currentTasks = (res.tasks || []).map(function(t, i) {
+      t._idx    = i;
+      // Backend returns "initials" (KB/AK/GA) and "assignedTo" (full name)
+      t._assign = t.initials || t.assignedTo || normalizeWho(t.who);
+      t._done   = t.status === "Done";
+      return t;
+    });
+    renderUpcomingDetail();
+  }).catch(function() {
+    document.getElementById("detailLoading").classList.add("hidden");
+    currentTasks = [];
+    renderUpcomingDetail();
+  });
+}
+
+function renderUpcomingDetail() {
+  var ev = currentEvent;
+  var container = document.getElementById("upcomingDetail");
+  container.innerHTML = "";
+
+  // Event header card
+  var headerCard = document.createElement("div");
+  headerCard.className = "card";
+  var dateStr = formatDateLong(ev.date || ev.eventDate);
+  headerCard.innerHTML =
+    '<div class="detail-event-name">' + esc(ev.name || ev.eventName) + '</div>' +
+    '<div class="detail-event-chips">' +
+      (ev.type || ev.eventType ? '<span class="chip type">' + esc(ev.type || ev.eventType) + '</span>' : '') +
+      '<span class="chip">' + esc(dateStr) + '</span>' +
+      (ev.status ? '<span class="chip">' + esc(ev.status) + '</span>' : '') +
+    '</div>';
+  container.appendChild(headerCard);
+
+  // Detail card with sub-tabs
+  var detailCard = document.createElement("div");
+  detailCard.className = "card";
+  detailCard.innerHTML =
+    '<div class="sub-tab-bar">' +
+      '<button class="sub-tab active" data-pane="info">Event Info</button>' +
+      '<button class="sub-tab" data-pane="tasks">Tasks</button>' +
+      '<button class="sub-tab" data-pane="promo">Promo</button>' +
+    '</div>' +
+    '<div class="sub-pane active" id="pane-info">' + buildInfoPane(ev) + '</div>' +
+    '<div class="sub-pane" id="pane-tasks"></div>' +
+    '<div class="sub-pane" id="pane-promo">' + buildPromoPane(ev) + '</div>';
+  container.appendChild(detailCard);
+
+  // Wire sub-tabs
+  detailCard.querySelectorAll(".sub-tab").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var paneId = this.getAttribute("data-pane");
+      detailCard.querySelectorAll(".sub-tab").forEach(function(b) { b.classList.remove("active"); });
+      detailCard.querySelectorAll(".sub-pane").forEach(function(p) { p.classList.remove("active"); });
+      this.classList.add("active");
+      var pane = document.getElementById("pane-" + paneId);
+      if (pane) pane.classList.add("active");
+      // Lazy render tasks pane
+      if (paneId === "tasks") renderTasksPane(ev);
+    });
+  });
+
+  container.classList.remove("hidden");
+
+  // Wire save button
+  var saveBtn = document.getElementById("infoSaveBtn");
+  if (saveBtn) {
+    saveBtn.addEventListener("click", saveEventInfo);
+  }
+
+  // Unsaved-changes warning
+  wireUnsavedWarning(detailCard);
+}
+
+// ─── Info pane ────────────────────────────────────────────────
+function buildInfoPane(ev) {
+  var speakers = [];
+  try { speakers = JSON.parse(ev.speakers || "[]"); } catch(e) { speakers = []; }
+  var speakerStr = speakers.map(function(s) {
+    return [s.name, s.title, s.institution].filter(Boolean).join(", ");
+  }).join("; ");
+
+  return '<div class="info-grid" id="infoGrid">' +
+    infoField("Event Name", ev.name || ev.eventName, "name", false, true) +
+    infoField("Date", ev.date || ev.eventDate, "date", false, false) +
+    infoField("Time", ev.time || ev.startTime, "time", false, false) +
+    infoField("Location", ev.location, "location", false, false) +
+    '</div>' +
+    '<div class="info-grid single" style="margin-top:14px;">' +
+    infoField("Description", ev.description, "description", true, false) +
+    '</div>' +
+    (speakerStr ? '<div class="info-grid single" style="margin-top:14px;">' +
+      infoField("Speakers", speakerStr, "speakers", false, false) +
+    '</div>' : '') +
+    '<div class="save-bar">' +
+      '<button class="save-btn" id="infoSaveBtn">Save Changes</button>' +
+      '<span class="save-msg" id="infoSaveMsg"></span>' +
+    '</div>';
+}
+
+function infoField(label, value, key, multiline, fullWidth) {
+  var tag = multiline ? "div" : "span";
+  var ce = 'contenteditable="true"';
+  return '<div class="info-field' + (fullWidth ? ' info-grid-full" style="grid-column:1/-1"' : '"') + '>' +
+    '<div class="info-label">' + esc(label) + '</div>' +
+    '<' + tag + ' class="info-value" ' + ce + ' data-key="' + key + '"' +
+    (multiline ? ' style="min-height:70px;"' : '') +
+    '>' + esc(value || '') + '</' + tag + '>' +
+    '</div>';
+}
+
+function wireUnsavedWarning(container) {
+  var dirty = false;
+  container.querySelectorAll(".info-value[contenteditable]").forEach(function(el) {
+    el.addEventListener("input", function() { dirty = true; });
+  });
+  container.querySelectorAll(".promo-link-input").forEach(function(el) {
+    el.addEventListener("input", function() { dirty = true; });
+  });
+  window.onbeforeunload = function() {
+    if (dirty) return "You have unsaved changes. Leave anyway?";
+  };
+  var saveBtn = document.getElementById("infoSaveBtn");
+  if (saveBtn) {
+    saveBtn.addEventListener("click", function() { dirty = false; });
+  }
+}
+
+function saveEventInfo() {
+  var btn = document.getElementById("infoSaveBtn");
+  var msg = document.getElementById("infoSaveMsg");
+  btn.disabled = true;
+  btn.textContent = "Saving...";
+  msg.textContent = "";
+  msg.className = "save-msg";
+
+  var fields = {};
+  document.querySelectorAll("#pane-info .info-value[data-key]").forEach(function(el) {
+    fields[el.getAttribute("data-key")] = el.textContent.trim();
+  });
+
+  post({
+    action:   "update_event",
+    eventId:  selectedEventId,
+    fields:   fields,          // backend expects "fields" key
+    editedBy: "KB",
+  }).then(function(res) {
+    btn.disabled = false;
+    btn.textContent = "Save Changes";
+    if (res.error) {
+      msg.textContent = "Error: " + res.error;
+      msg.className = "save-msg error";
+    } else {
+      msg.textContent = "Saved!";
+      msg.className = "save-msg success";
+      // Update local event object
+      Object.assign(currentEvent, fields);
+      // Update sidebar name if changed
+      if (fields.name) {
+        var item = document.querySelector('.event-item[data-id="' + selectedEventId + '"] .event-item-name');
+        if (item) item.textContent = fields.name;
+      }
+      setTimeout(function() { msg.textContent = ""; }, 3000);
+    }
+  }).catch(function(err) {
+    btn.disabled = false;
+    btn.textContent = "Save Changes";
+    msg.textContent = "Error saving.";
+    msg.className = "save-msg error";
+  });
+}
+
+// ─── Tasks pane ───────────────────────────────────────────────
+function renderTasksPane(ev) {
+  var pane = document.getElementById("pane-tasks");
+  if (!pane || pane.dataset.rendered) return;
+  pane.dataset.rendered = "1";
+
+  if (!currentTasks.length) {
+    pane.innerHTML = '<p style="font-size:0.82rem;color:#bbb;padding:8px 0;">No tasks found for this event.</p>';
+    return;
+  }
+
+  // Build task list container
+  var listDiv = document.createElement("div");
+  listDiv.id = "upcomingTaskList";
+  pane.appendChild(listDiv);
+
+  var groups = {};
+  currentTasks.forEach(function(t) {
+    var cat = t.category || "Other";
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(t);
+  });
+
+  var order = CAT_ORDER.concat(
+    Object.keys(groups).filter(function(c) { return CAT_ORDER.indexOf(c) === -1; })
+  );
+
+  order.forEach(function(cat) {
+    if (!groups[cat] || !groups[cat].length) return;
+    var hdr = document.createElement("div");
+    hdr.className = "task-section-hdr";
+    hdr.textContent = cat + " (" + groups[cat].length + ")";
+    listDiv.appendChild(hdr);
+
+    groups[cat].forEach(function(t) {
+      var row = document.createElement("div");
+      row.className = "task-row";
+
+      var cb = document.createElement("input");
+      cb.type = "checkbox"; cb.className = "task-check";
+      cb.checked = t._done;
+
+      var labelWrap = document.createElement("div");
+      labelWrap.className = "task-label" + (t._done ? " task-label-done" : "");
+      labelWrap.innerHTML = esc(t.task) +
+        (t.note ? '<div class="task-note">' + esc(t.note) + '</div>' : '');
+
+      var sel = makeAssignDropdown(t);
+
+      // dueDate is a formatted date string from the spreadsheet
+      var meta = document.createElement("span");
+      meta.className = "task-meta"; meta.textContent = t.dueDate || "";
+
+      cb.addEventListener("change", function() {
+        t._done = this.checked;
+        labelWrap.classList.toggle("task-label-done", this.checked);
+      });
+
+      row.appendChild(cb);
+      row.appendChild(labelWrap);
+      row.appendChild(sel);
+      row.appendChild(meta);
+      listDiv.appendChild(row);
+    });
+  });
+}
+
+// ─── Promo pane ───────────────────────────────────────────────
+function buildPromoPane(ev) {
+  // Channels are UI-only state (no backend column yet — saved in session only)
+  var channelsHtml = PROMO_CHANNELS.map(function(ch) {
+    return '<div class="promo-channel">' +
+      '<input type="checkbox" class="promo-check" id="ch_' + esc(ch) + '">' +
+      '<label class="promo-channel-label" for="ch_' + esc(ch) + '">' + esc(ch) + '</label>' +
+    '</div>';
+  }).join("");
+
+  // Asset links come directly from event columns in the spreadsheet
+  var flyer = ev.flyerLink || "";
+  var blurb  = ev.blurb    || "";
+  var rsvp   = ev.rsvpLink || "";
+
+  var linksHtml =
+    promoLink("Flyer", "flyerLink", flyer) +
+    promoLink("Blurb", "blurb", blurb) +
+    promoLink("RSVP Form", "rsvpLink", rsvp);
+
+  return '<div class="promo-section">' +
+      '<div class="promo-section-title">Channels</div>' +
+      channelsHtml +
+    '</div>' +
+    '<div class="promo-section">' +
+      '<div class="promo-section-title">Assets</div>' +
+      linksHtml +
+    '</div>' +
+    '<div class="save-bar">' +
+      '<button class="save-btn" id="promoSaveBtn" onclick="savePromo()">Save Changes</button>' +
+      '<span class="save-msg" id="promoSaveMsg"></span>' +
+    '</div>';
+}
+
+function promoLink(label, key, val) {
+  return '<div class="promo-link">' +
+    '<span class="promo-link-label">' + esc(label) + '</span>' +
+    '<input class="promo-link-input" type="url" data-key="' + key + '" placeholder="Paste link..." value="' + esc(val) + '">' +
+    (val ? '<a class="promo-link-open" href="' + esc(val) + '" target="_blank">Open &#8599;</a>' : '<span class="promo-link-open"></span>') +
+  '</div>';
+}
+
+function savePromo() {
+  var btn = document.getElementById("promoSaveBtn");
+  var msg = document.getElementById("promoSaveMsg");
+  if (!btn) return;
+  btn.disabled = true;
+  btn.textContent = "Saving...";
+  msg.textContent = "";
+
+  // Save asset links to spreadsheet columns (flyerLink, blurb, rsvpLink)
+  var fields = {};
+  document.querySelectorAll("#pane-promo .promo-link-input").forEach(function(inp) {
+    fields[inp.getAttribute("data-key")] = inp.value.trim();
+  });
+
+  post({
+    action:  "update_event",
+    eventId: selectedEventId,
+    fields:  fields,           // backend expects "fields" key
+    editedBy: "KB",
+  }).then(function(res) {
+    btn.disabled = false;
+    btn.textContent = "Save Changes";
+    if (res.error) {
+      msg.textContent = "Error: " + res.error;
+      msg.className = "save-msg error";
+    } else {
+      msg.textContent = "Saved!";
+      msg.className = "save-msg success";
+      // Update open links
+      document.querySelectorAll("#pane-promo .promo-link-input").forEach(function(inp) {
+        var val = inp.value.trim();
+        var linkEl = inp.nextElementSibling;
+        if (linkEl && val) {
+          linkEl.href = val;
+          linkEl.textContent = "Open ↗";
+          linkEl.classList.add("promo-link-open");
+        }
+      });
+      setTimeout(function() { msg.textContent = ""; }, 3000);
+    }
+  }).catch(function() {
+    btn.disabled = false;
+    btn.textContent = "Save Changes";
+    msg.textContent = "Error saving.";
+    msg.className = "save-msg error";
+  });
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+// Builds a KB/AK/GA assignment <select> bound to task._assign.
+function makeAssignDropdown(t) {
+  var sel = document.createElement("select");
+  sel.className = "task-assign assign-" + t._assign;
+  ["KB", "AK", "GA"].forEach(function(opt) {
+    var o = document.createElement("option");
+    o.value = opt; o.textContent = opt;
+    if (opt === t._assign) o.selected = true;
+    sel.appendChild(o);
+  });
+  sel.addEventListener("change", function() {
+    t._assign = this.value;
+    this.className = "task-assign assign-" + this.value;
+  });
+  return sel;
+}
+
+function showDetailError(msg) {
+  var empty = document.getElementById("detailEmpty");
+  empty.innerHTML = '<div><div class="detail-empty-icon">&#9888;&#65039;</div><div style="color:#c0392b;">' + esc(msg) + '</div></div>';
+  empty.classList.remove("hidden");
+}
+
+function normalizeWho(who) {
+  return WHO_MAP[who] || (who ? who.toUpperCase() : "KB");
+}
+
+function formatDateShort(dateStr) {
+  if (!dateStr) return "";
+  var d = new Date((dateStr + "").replace(/-/g, "/"));
+  if (isNaN(d)) return dateStr;
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function formatDateLong(dateStr) {
+  if (!dateStr) return "";
+  var d = new Date((dateStr + "").replace(/-/g, "/"));
+  if (isNaN(d)) return dateStr;
+  return d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+}
+
+function post(payload) {
+  return fetch(APPS_SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }).then(function(r) { return r.json(); });
+}
+
+function esc(str) {
+  return (str || "").toString()
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+// Wire promo channel done-state
+document.addEventListener("change", function(e) {
+  if (e.target && e.target.classList.contains("promo-check")) {
+    var label = e.target.nextElementSibling;
+    if (label) label.classList.toggle("done", e.target.checked);
+  }
+});
+</script>
+</body>
+</html>

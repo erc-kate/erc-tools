@@ -81,11 +81,11 @@
       display: inline; outline: none; border-radius: 3px; transition: background 0.1s;
     }
     body.editing .editable-field {
-      background: rgba(80, 0, 0, 0.04); border-bottom: 1px dashed rgba(80, 0, 0, 0.3);
-      cursor: text; padding: 1px 3px; border-radius: 2px;
+      display: inline-block; background: #fafafa; border: 1px solid #d0d0d0;
+      border-radius: 4px; cursor: text; padding: 6px 10px; min-width: 40px;
     }
     body.editing .editable-field:focus {
-      background: rgba(80, 0, 0, 0.07); outline: none;
+      background: #fff; border-color: #999; outline: none;
     }
     .empty-field { color: #ccc; font-style: italic; }
     body.editing .empty-field { color: #bbb; }
@@ -651,8 +651,19 @@ function renderEvent(ev) {
   // ── Edit page toggle
   var editBtn = document.getElementById("editPageBtn");
   var editing = false;
+  var hasUnsavedChanges = false;
+
+  // Warn before leaving with unsaved edits
+  window.addEventListener("beforeunload", function(e) {
+    if (editing && hasUnsavedChanges) {
+      e.preventDefault();
+      e.returnValue = "";
+    }
+  });
+
   editBtn.addEventListener("click", function() {
     editing = !editing;
+    if (!editing) hasUnsavedChanges = false; // cleared on Done Editing
     document.body.classList.toggle("editing", editing);
     editBtn.textContent = editing ? "Done Editing" : "Edit Page";
     editBtn.classList.toggle("active", editing);
@@ -660,6 +671,10 @@ function renderEvent(ev) {
     // Toggle contenteditable on all .editable-field elements
     document.querySelectorAll(".editable-field").forEach(function(el) {
       el.contentEditable = editing ? "true" : "false";
+      if (editing) {
+        // Track any changes made
+        el.addEventListener("input", function() { hasUnsavedChanges = true; }, { once: false });
+      }
       if (!editing) {
         var isEmpty = !el.textContent.trim() || el.textContent.trim() === "\u2014";
         el.classList.toggle("empty-field", isEmpty);
@@ -699,6 +714,9 @@ function renderEvent(ev) {
     }
 
     if (editing) {
+      document.querySelectorAll(".link-edit-input").forEach(function(inp) {
+        inp.addEventListener("input", function() { hasUnsavedChanges = true; }, { once: false });
+      });
       var first = document.querySelector(".editable-field");
       if (first) first.focus();
     }

@@ -39,17 +39,6 @@
       text-transform: uppercase; letter-spacing: 0.05em; color: #888; margin-bottom: 14px;
     }
 
-    /* ── Password screen ────────────────────────────────── */
-    #passwordScreen { text-align: center; padding: 40px 24px; }
-    #passwordScreen p { font-size: 0.9rem; color: #666; margin-bottom: 20px; }
-    .pw-input {
-      font-family: inherit; font-size: 1rem; padding: 10px 14px;
-      border: 1.5px solid #ccc; border-radius: 6px; outline: none; width: 200px;
-      text-align: center; letter-spacing: 0.08em; transition: border-color 0.15s;
-    }
-    .pw-input:focus { border-color: #500000; }
-    .pw-error { font-size: 0.8rem; color: #c0392b; margin-top: 8px; min-height: 18px; }
-
     /* ── Event summary ──────────────────────────────────── */
     .event-meta-row {
       display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px;
@@ -81,6 +70,18 @@
     }
     .task-meta { font-size: 0.72rem; color: #bbb; white-space: nowrap; flex-shrink: 0; }
 
+    /* ── Task assign dropdown ───────────────────────────── */
+    .task-assign {
+      font-family: inherit; font-size: 0.78rem; font-weight: 600;
+      border: 1.5px solid #ddd; border-radius: 4px; padding: 3px 6px;
+      background: #fff; color: #333; cursor: pointer; outline: none;
+      transition: border-color 0.15s; flex-shrink: 0;
+    }
+    .task-assign:focus { border-color: #500000; }
+    .task-assign.assign-KB { background: #fce8e8; color: #7a0000; border-color: #f5c0c0; }
+    .task-assign.assign-AK { background: #e8f5e8; color: #1a5c1a; border-color: #b2dfb2; }
+    .task-assign.assign-GA { background: #f5e8ff; color: #5c1a8f; border-color: #d8b2f5; }
+
     /* ── Approve button ─────────────────────────────────── */
     .approve-row {
       display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
@@ -95,6 +96,51 @@
     .approve-msg { font-size: 0.85rem; }
     .approve-msg.success { color: #1a6b3c; }
     .approve-msg.error   { color: #8b1a1a; }
+
+    /* ── Email modal ─────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100; padding: 20px;
+    }
+    .modal-box {
+      background: #fff; border-radius: 10px; padding: 28px 28px 24px;
+      max-width: 420px; width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    }
+    .modal-box h3 {
+      font-family: 'Work Sans', sans-serif; font-size: 1.05rem; font-weight: 700;
+      color: #1a1a1a; margin-bottom: 6px;
+    }
+    .modal-box p {
+      font-size: 0.82rem; color: #777; margin-bottom: 20px; line-height: 1.5;
+    }
+    .modal-field { margin-bottom: 14px; }
+    .modal-field:last-of-type { margin-bottom: 0; }
+    .modal-field label {
+      display: block; font-size: 0.75rem; font-weight: 600; color: #555;
+      margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .modal-field input[type="email"] {
+      width: 100%; font-family: inherit; font-size: 0.9rem; color: #1a1a1a;
+      padding: 8px 10px; border: 1px solid #ccc; border-radius: 5px; outline: none;
+      transition: border-color 0.15s;
+    }
+    .modal-field input[type="email"]:focus { border-color: #500000; }
+    .modal-actions {
+      display: flex; gap: 10px; align-items: center; margin-top: 22px;
+    }
+    .modal-send-btn {
+      font-family: inherit; font-size: 0.9rem; font-weight: 700;
+      background: #500000; color: #fff; border: none; border-radius: 6px;
+      padding: 10px 24px; cursor: pointer; transition: background 0.15s;
+    }
+    .modal-send-btn:hover:not(:disabled) { background: #3a0000; }
+    .modal-send-btn:disabled { background: #aaa; cursor: not-allowed; }
+    .modal-cancel-btn {
+      font-family: inherit; font-size: 0.85rem; color: #888;
+      background: none; border: none; cursor: pointer; padding: 0;
+    }
+    .modal-cancel-btn:hover { color: #500000; }
 
     /* ── Loading ────────────────────────────────────────── */
     .loading-msg { text-align: center; padding: 40px; color: #bbb; font-size: 0.9rem; }
@@ -124,18 +170,7 @@
 
 <main>
 
-  <!-- Step 1: Password -->
-  <div class="card" id="passwordScreen">
-    <p>Enter the approval password to review this event.</p>
-    <div>
-      <input type="password" class="pw-input" id="pwInput" placeholder="Password" autocomplete="off">
-    </div>
-    <div class="pw-error" id="pwError"></div>
-    <br>
-    <button class="btn-primary" id="pwBtn">Continue</button>
-  </div>
-
-  <!-- Step 2: Event + Tasks (hidden until password verified) -->
+  <!-- Event + Tasks (hidden until loadEvent() renders content) -->
   <div class="hidden" id="approveContent">
 
     <!-- Event summary -->
@@ -165,55 +200,62 @@
 
 </main>
 
+<!-- Email modal -->
+<div class="modal-overlay hidden" id="emailModal">
+  <div class="modal-box">
+    <h3>Notify Your Team</h3>
+    <p>Optionally enter email addresses to notify each person of their tasks. Leave blank to skip.</p>
+    <div class="modal-field">
+      <label>Kate B. (KB)</label>
+      <input type="email" id="emailKB" value="katebarnes@tamu.edu">
+    </div>
+    <div class="modal-field">
+      <label>Andy K. (AK) <span style="font-weight:400;color:#bbb;font-size:0.7rem;">optional</span></label>
+      <input type="email" id="emailAK" placeholder="akwok@tamu.edu" autocomplete="off">
+    </div>
+    <div class="modal-field">
+      <label>Grad Ambassador (GA) <span style="font-weight:400;color:#bbb;font-size:0.7rem;">optional</span></label>
+      <input type="email" id="emailGA" placeholder="gradambassador@tamu.edu" autocomplete="off">
+    </div>
+    <div class="modal-actions">
+      <button class="modal-send-btn" id="modalSendBtn">Send &amp; Generate Tasks</button>
+      <button class="modal-cancel-btn" id="modalCancelBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script>
+// =============================================================
+// approve.html — ERC Event Hub
+// Public-facing approval page. Linked from the approval email
+// Kate receives after a new event is submitted. Shows event
+// details + task checklist; on approval, writes tasks to the
+// spreadsheet and emails assignments to the team.
+//
+// URL param: ?id=EVT_xxxx  (event ID from the events sheet)
+// Backend: Apps Script doPost — action "get_pending" + "approve"
+// =============================================================
 var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_T8UyShcR4tTABICN8Z2U47XqC2IVT40h3EPG5-61MIwfOZXb0oHkXyQSZ_tq_V0X/exec";
 var CAT_ORDER = ["Logistics", "Promo", "Food", "Wrap-up"];
 
 var params  = new URLSearchParams(window.location.search);
 var eventId = params.get("id");
-var password = "";
 
+// If no event ID in URL, show error immediately; otherwise load the event
 if (!eventId) {
-  document.getElementById("passwordScreen").innerHTML =
-    '<p style="color:#c0392b;">No event ID found in the URL. Check your approval email for the correct link.</p>';
-}
-
-// ── Password ──────────────────────────────────────────────────
-document.getElementById("pwBtn").addEventListener("click", submitPassword);
-document.getElementById("pwInput").addEventListener("keydown", function(e) {
-  if (e.key === "Enter") submitPassword();
-});
-
-function submitPassword() {
-  var pw = document.getElementById("pwInput").value.trim();
-  if (!pw) { setError("Please enter the password."); return; }
-
-  document.getElementById("pwBtn").disabled = true;
-  document.getElementById("pwBtn").textContent = "Checking...";
-
-  post({ action: "verify_password", password: pw })
-    .then(function(res) {
-      if (!res.success) throw new Error(res.error || "Incorrect password.");
-      password = pw;
-      document.getElementById("passwordScreen").classList.add("hidden");
-      loadEvent();
-    })
-    .catch(function(err) {
-      setError(err.message || "Incorrect password.");
-      document.getElementById("pwBtn").disabled = false;
-      document.getElementById("pwBtn").textContent = "Continue";
-    });
-}
-
-function setError(msg) {
-  document.getElementById("pwError").textContent = msg;
+  var loadMsg = document.getElementById("loadingMsg");
+  loadMsg.textContent = "No event ID found in the URL. Check your approval email for the correct link.";
+  loadMsg.style.color = "#c0392b";
+  loadMsg.classList.remove("hidden");
+} else {
+  loadEvent();
 }
 
 // ── Load Event ────────────────────────────────────────────────
 function loadEvent() {
   document.getElementById("loadingMsg").classList.remove("hidden");
 
-  post({ action: "get_pending", password: password, eventId: eventId })
+  post({ action: "get_pending", eventId: eventId })
     .then(function(res) {
       if (res.error) throw new Error(res.error);
       document.getElementById("loadingMsg").classList.add("hidden");
@@ -249,6 +291,13 @@ function renderEvent(ev) {
 // ── Render Task Checklist ─────────────────────────────────────
 var allTasks = [];
 
+// Normalize config "who" keys → display initials
+var WHO_MAP = { kate: "KB", clarence: "GA", andy: "AK", ga: "GA", minutes: "GA" };
+
+function normalizeWho(who) {
+  return WHO_MAP[who] || (who ? who.toUpperCase() : "KB");
+}
+
 function renderTasks(tasks) {
   allTasks = tasks;
   var container = document.getElementById("taskList");
@@ -257,8 +306,9 @@ function renderTasks(tasks) {
   // Group by category
   var groups = {};
   tasks.forEach(function(t, i) {
-    t._idx = i;
+    t._idx     = i;
     t._checked = true;
+    t._assign  = normalizeWho(t.who);  // default assignment
     if (!groups[t.category]) groups[t.category] = [];
     groups[t.category].push(t);
   });
@@ -279,31 +329,46 @@ function renderTasks(tasks) {
       var row = document.createElement("div");
       row.className = "task-row";
 
+      // Checkbox
       var cb = document.createElement("input");
       cb.type = "checkbox";
       cb.className = "task-check";
       cb.checked = true;
 
-      var labelWrap = document.createElement("label");
+      // Task label + note
+      var labelWrap = document.createElement("div");
       labelWrap.className = "task-label";
-      labelWrap.style.cursor = "pointer";
       labelWrap.innerHTML = esc(t.task) +
         (t.note ? '<div class="task-note">' + esc(t.note) + '</div>' : '');
 
+      // Assignment dropdown
+      var sel = document.createElement("select");
+      sel.className = "task-assign assign-" + t._assign;
+      ["KB", "AK", "GA"].forEach(function(opt) {
+        var o = document.createElement("option");
+        o.value = opt;
+        o.textContent = opt;
+        if (opt === t._assign) o.selected = true;
+        sel.appendChild(o);
+      });
+      sel.addEventListener("change", function() {
+        t._assign = this.value;
+        this.className = "task-assign assign-" + this.value;
+      });
+
+      // Due label
+      var dueLabel = t.due === 0 ? "Day of" : t.due > 0 ? "E+" + t.due : "E" + t.due;
       var meta = document.createElement("span");
       meta.className = "task-meta";
-      var whoMap = { kate: "KB", clarence: "CM", andy: "AK", ga: "GA", minutes: "TBD" };
-      var initials = whoMap[t.who] || t.who || "";
-      var dueLabel = t.due === 0 ? "Day of" :
-        t.due > 0 ? "E+" + t.due :
-        "E" + t.due;
-      meta.textContent = initials + " · " + dueLabel;
+      meta.textContent = dueLabel;
 
       cb.addEventListener("change", function() {
         t._checked = this.checked;
         row.classList.toggle("unchecked", !this.checked);
       });
 
+      // Clicking label toggles checkbox
+      labelWrap.style.cursor = "pointer";
       labelWrap.addEventListener("click", function() {
         cb.checked = !cb.checked;
         cb.dispatchEvent(new Event("change"));
@@ -311,48 +376,68 @@ function renderTasks(tasks) {
 
       row.appendChild(cb);
       row.appendChild(labelWrap);
+      row.appendChild(sel);
       row.appendChild(meta);
       container.appendChild(row);
     });
   });
 }
 
-// ── Approve ───────────────────────────────────────────────────
+// ── Approve — opens email modal ───────────────────────────────
 document.getElementById("approveBtn").addEventListener("click", function() {
-  var btn = document.getElementById("approveBtn");
   var msg = document.getElementById("approveMsg");
-
   var approved = allTasks.filter(function(t) { return t._checked; });
   if (!approved.length) {
     msg.textContent = "Please keep at least one task checked.";
     msg.className = "approve-msg error";
     return;
   }
-
-  btn.disabled = true;
-  btn.textContent = "Generating tasks...";
   msg.textContent = "";
   msg.className = "approve-msg";
+  document.getElementById("emailModal").classList.remove("hidden");
+  document.getElementById("emailKB").focus();
+});
+
+// ── Modal: cancel ─────────────────────────────────────────────
+document.getElementById("modalCancelBtn").addEventListener("click", function() {
+  document.getElementById("emailModal").classList.add("hidden");
+});
+
+// ── Modal: send & generate ────────────────────────────────────
+document.getElementById("modalSendBtn").addEventListener("click", function() {
+  var emailKB = document.getElementById("emailKB").value.trim();
+  var emailAK = document.getElementById("emailAK").value.trim();
+  var emailGA = document.getElementById("emailGA").value.trim();
+
+  // Emails are optional — skip sending to any blank address
+
+  var btn = this;
+  btn.disabled = true;
+  btn.textContent = "Generating...";
+
+  var approved = allTasks.filter(function(t) { return t._checked; })
+    .map(function(t) { return Object.assign({}, t, { assignedTo: t._assign }); });
 
   post({
     action:        "approve",
-    password:      password,
     eventId:       eventId,
     approvedTasks: approved,
+    emails: { KB: emailKB, AK: emailAK, GA: emailGA },
   })
   .then(function(res) {
     if (res.error) throw new Error(res.error);
-    msg.textContent = "Tasks generated! Redirecting to event page...";
+    document.getElementById("emailModal").classList.add("hidden");
+    var msg = document.getElementById("approveMsg");
+    msg.textContent = "Tasks generated and emails sent! Redirecting...";
     msg.className = "approve-msg success";
     setTimeout(function() {
       window.location.href = "event.html?id=" + encodeURIComponent(eventId);
-    }, 1500);
+    }, 2000);
   })
   .catch(function(err) {
-    msg.textContent = "Error: " + err.message;
-    msg.className = "approve-msg error";
+    alert("Error: " + err.message);
     btn.disabled = false;
-    btn.textContent = "Approve & Generate Tasks";
+    btn.textContent = "Send & Generate Tasks";
   });
 });
 
