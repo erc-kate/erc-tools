@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Submit Event — ERC Event Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;700&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 15px; background: #f5f5f5; color: #1a1a1a; min-height: 100vh;
+    }
+
+    .page-header {
+      background: #500000; color: #fff; padding: 24px 24px 20px;
+    }
+    .page-header-inner { max-width: 680px; margin: 0 auto; }
+    .back-link {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 0.8rem; color: rgba(255,255,255,0.65); text-decoration: none; margin-bottom: 8px;
+    }
+    .back-link:hover { color: #fff; }
+    .page-header h1 { font-family: 'Work Sans', sans-serif; font-size: 1.3rem; font-weight: 700; }
+
+    main { max-width: 680px; margin: 0 auto; padding: 28px 24px 60px; }
+
+    /* ── Form cards ─────────────────────────────────────── */
+    .form-card {
+      background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;
+      padding: 22px 24px; margin-bottom: 18px;
+    }
+    .form-card h2 {
+      font-family: 'Work Sans', sans-serif; font-size: 0.85rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.05em; color: #888;
+      margin-bottom: 16px;
+    }
+
+    /* ── Type selector buttons ──────────────────────────── */
+    .type-selector {
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .type-btn {
+      font-family: 'Work Sans', sans-serif; font-size: 0.875rem; font-weight: 600;
+      padding: 8px 18px; border-radius: 20px; border: 1.5px solid #ddd;
+      background: #fff; color: #666; cursor: pointer; transition: all 0.15s;
+    }
+    .type-btn:hover { border-color: #500000; color: #500000; }
+    .type-btn.selected { background: #500000; color: #fff; border-color: #500000; }
+
+    .sub-type-row {
+      margin-top: 14px; padding-top: 14px; border-top: 1px solid #f0f0f0;
+    }
+    .sub-label {
+      font-size: 0.75rem; font-weight: 600; color: #aaa; text-transform: uppercase;
+      letter-spacing: 0.05em; margin-bottom: 8px;
+    }
+
+    /* ── Form fields ────────────────────────────────────── */
+    .field { margin-bottom: 16px; }
+    .field:last-child { margin-bottom: 0; }
+    .field > label {
+      display: block; font-size: 0.78rem; font-weight: 600; color: #555;
+      margin-bottom: 5px;
+    }
+    .field > label .req { color: #500000; margin-left: 2px; }
+    .field > label .opt { font-weight: 400; color: #bbb; font-size: 0.72rem; margin-left: 4px; }
+    .field input[type="text"],
+    .field input[type="date"],
+    .field input[type="time"],
+    .field input[type="url"],
+    .field select {
+      width: 100%; font-family: inherit; font-size: 0.9rem; color: #1a1a1a;
+      padding: 8px 10px; border: 1px solid #ccc; border-radius: 5px; outline: none;
+      transition: border-color 0.15s;
+    }
+    .field input:focus, .field select:focus { border-color: #500000; }
+    .field select { cursor: pointer; }
+    .field-note { font-size: 0.75rem; color: #999; margin-top: 4px; }
+
+    /* ── Two-col grid ───────────────────────────────────── */
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+    .field-row .field { margin-bottom: 0; }
+
+    /* ── Pill toggles (yes/no options) ─────────────────── */
+    .pill-group { display: flex; gap: 8px; flex-wrap: wrap; }
+    .pill-option { cursor: pointer; }
+    .pill-checkbox { display: none; }
+    .pill-label {
+      display: inline-block; padding: 7px 18px; border-radius: 20px;
+      border: 1.5px solid #bbb; font-size: 0.875rem; font-weight: 600;
+      color: #444; background: #fff; transition: all 0.15s; user-select: none;
+      font-family: 'Work Sans', sans-serif; box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+      cursor: pointer;
+    }
+    .pill-option:hover .pill-label { border-color: #500000; color: #500000; background: #fdf0f0; }
+    .pill-checkbox:checked + .pill-label { background: #500000; color: #fff; border-color: #500000; box-shadow: none; }
+
+    /* ── Speaker block ──────────────────────────────────── */
+    .speaker-block {
+      border: 1px solid #eee; border-radius: 6px; padding: 14px 16px;
+      margin-bottom: 12px; background: #fafafa;
+    }
+    .speaker-block-header {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+    }
+    .speaker-block-header span {
+      font-size: 0.8rem; font-weight: 600; color: #777; text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .remove-speaker-btn {
+      font-size: 0.75rem; color: #c0392b; background: none; border: none;
+      cursor: pointer; font-family: inherit; padding: 0;
+    }
+    .remove-speaker-btn:hover { text-decoration: underline; }
+    #addSpeakerBtn {
+      font-size: 0.8rem; color: #500000; background: none; border: 1px dashed #ccc;
+      border-radius: 5px; padding: 8px 14px; cursor: pointer; font-family: inherit;
+      width: 100%; text-align: center; transition: border-color 0.15s, background 0.15s;
+    }
+    #addSpeakerBtn:hover { border-color: #500000; background: #fdf0f0; }
+
+    /* ── Institution toggle ─────────────────────────────── */
+    .inst-toggle-row {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+    }
+    .inst-toggle-row label {
+      font-size: 0.78rem; font-weight: 600; color: #555;
+    }
+    .inst-pill-group { display: flex; gap: 6px; }
+    .inst-pill-option { cursor: pointer; }
+    .inst-pill-checkbox { display: none; }
+    .inst-pill-label {
+      display: inline-block; padding: 5px 14px; border-radius: 12px;
+      border: 1.5px solid #bbb; font-size: 0.78rem; font-weight: 600;
+      color: #444; background: #fff; transition: all 0.15s; user-select: none;
+      font-family: 'Work Sans', sans-serif; cursor: pointer;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    }
+    .inst-pill-option:hover .inst-pill-label { border-color: #500000; color: #500000; }
+    .inst-pill-checkbox:checked + .inst-pill-label { background: #500000; color: #fff; border-color: #500000; box-shadow: none; }
+
+    /* ── Misc warning ───────────────────────────────────── */
+    .misc-warning {
+      margin-top: 4px; padding: 12px 14px; background: #fff8e6; border-radius: 6px;
+      border-left: 3px solid #e6a800; font-size: 0.84rem; color: #7a5500; line-height: 1.5;
+    }
+
+    /* ── Hidden ─────────────────────────────────────────── */
+    .hidden { display: none !important; }
+
+    /* ── Submit row ─────────────────────────────────────── */
+    .submit-row {
+      display: flex; gap: 12px; align-items: center; margin-top: 4px;
+    }
+    .submit-btn {
+      font-family: inherit; font-size: 0.9375rem; font-weight: 700;
+      background: #500000; color: #fff; border: none; border-radius: 6px;
+      padding: 11px 32px; cursor: pointer; transition: background 0.15s;
+    }
+    .submit-btn:hover { background: #3a0000; }
+    .submit-btn:disabled { background: #aaa; cursor: not-allowed; }
+    .cancel-link {
+      font-size: 0.85rem; color: #888; text-decoration: none;
+    }
+    .cancel-link:hover { color: #500000; }
+
+    /* ── Status messages ────────────────────────────────── */
+    .status-msg {
+      display: none; padding: 14px 18px; border-radius: 6px; font-size: 0.875rem;
+      margin-bottom: 18px;
+    }
+    .status-msg.success { background: #edfaf1; color: #1a6b3c; border: 1px solid #b2dfcb; display: block; }
+    .status-msg.error   { background: #fff0f0; color: #8b1a1a; border: 1px solid #f5c0c0; display: block; }
+
+    @media (max-width: 540px) {
+      .field-row { grid-template-columns: 1fr; }
+      .type-selector { gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="page-header-inner">
+    <a href="index.html" class="back-link">&larr; Event Hub</a>
+    <h1>Submit a New Event</h1>
+  </div>
+</header>
+
+<main>
+  <div id="statusMsg" class="status-msg"></div>
+
+  <form id="submitForm" novalidate>
+
+    <!-- ── Step 1: Event Type ─────────────────────────── -->
+    <div class="form-card">
+      <h2>Event Type</h2>
+      <div class="type-selector" id="typeSelector">
+        <button type="button" class="type-btn" data-type="EdTalk">EdTalk / Speaker</button>
+        <button type="button" class="type-btn" data-type="Happy Hour">Happy Hour</button>
+        <button type="button" class="type-btn" data-type="Internal">Internal</button>
+        <button type="button" class="type-btn" data-type="Miscellaneous">Miscellaneous</button>
+      </div>
+
+      <!-- Internal sub-type -->
+      <div id="internalSubSection" class="sub-type-row hidden">
+        <div class="sub-label">Which type?</div>
+        <div class="type-selector" id="subTypeSelector">
+          <button type="button" class="type-btn sub-btn" data-sub="Steering Committee">Steering Committee</button>
+          <button type="button" class="type-btn sub-btn" data-sub="Advisory Committee">Advisory Committee</button>
+          <button type="button" class="type-btn sub-btn" data-sub="Internal Miscellaneous">Internal Miscellaneous</button>
+        </div>
+      </div>
+
+      <input type="hidden" id="eventType" name="eventType">
+      <input type="hidden" id="internalSubtype" name="internalSubtype">
+    </div>
+
+    <!-- ── Speaker section (EdTalk only) ──────────────── -->
+    <div class="form-card hidden" id="speakerCard">
+      <h2>Speaker(s)</h2>
+      <div id="speakersList"></div>
+      <button type="button" id="addSpeakerBtn">+ Add speaker</button>
+    </div>
+
+    <!-- ── Event Name (Internal Misc + Misc only) ──────── -->
+    <div class="form-card hidden" id="eventNameCard">
+      <h2>Event Name</h2>
+      <div class="field">
+        <label for="eventName">Name <span class="req">*</span></label>
+        <input type="text" id="eventName" name="eventName" placeholder="e.g. Grad Ambassador Lunch">
+      </div>
+    </div>
+
+    <!-- ── Key Details ─────────────────────────────────── -->
+    <div class="form-card hidden" id="keyDetailsCard">
+      <h2>Key Details</h2>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="eventDate">Date <span class="req">*</span></label>
+          <input type="date" id="eventDate" name="eventDate" required>
+        </div>
+        <div class="field">
+          <label for="startTime">Start Time <span class="opt">optional</span></label>
+          <input type="text" id="startTime" name="startTime" placeholder="e.g. 2:30 PM" autocomplete="off">
+        </div>
+      </div>
+
+      <!-- Location (hidden for Advisory Committee) -->
+      <div class="field hidden" id="locationField">
+        <label for="location">Location <span class="opt">optional</span></label>
+        <input type="text" id="location" name="location" placeholder="e.g. MSC 2404">
+      </div>
+
+      <!-- Following event (Happy Hour only) -->
+      <div class="field hidden" id="followingEventField">
+        <label>Following another event?</label>
+        <div class="pill-group">
+          <label class="pill-option">
+            <input type="checkbox" id="followingEvent" name="followingEvent" class="pill-checkbox">
+            <span class="pill-label">Yes — following event</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Options pills (zoom, food, agenda, slides — conditional per type) -->
+      <div class="field hidden" id="optionsField">
+        <label>Options</label>
+        <div class="pill-group" id="optionsPillGroup">
+          <label class="pill-option hidden" id="zoomPillWrap">
+            <input type="checkbox" id="hasZoom" name="hasZoom" class="pill-checkbox">
+            <span class="pill-label">Zoom</span>
+          </label>
+          <label class="pill-option hidden" id="foodPillWrap">
+            <input type="checkbox" id="hasFood" name="hasFood" class="pill-checkbox">
+            <span class="pill-label">Food / Catering</span>
+          </label>
+          <label class="pill-option hidden" id="agendaPillWrap">
+            <input type="checkbox" id="needsAgenda" name="needsAgenda" class="pill-checkbox">
+            <span class="pill-label">Agenda</span>
+          </label>
+          <label class="pill-option hidden" id="slidesPillWrap">
+            <input type="checkbox" id="needsSlides" name="needsSlides" class="pill-checkbox">
+            <span class="pill-label">Slides</span>
+          </label>
+          <label class="pill-option hidden" id="ercSlidesPillWrap">
+            <input type="checkbox" id="needsErcSlides" name="needsErcSlides" class="pill-checkbox">
+            <span class="pill-label">ERC Intro Slides</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Misc warning -->
+      <div class="misc-warning hidden" id="miscWarning">
+        ⚠️ Miscellaneous events don't have a standard task list. You'll build the task list manually after submitting.
+      </div>
+
+    </div>
+
+    <!-- ── Submit ───────────────────────────────────────── -->
+    <div class="form-card hidden" id="submitCard">
+      <div class="submit-row">
+        <button type="submit" class="submit-btn" id="submitBtn">Submit Event</button>
+        <a href="index.html" class="cancel-link">Cancel</a>
+      </div>
+    </div>
+
+  </form>
+</main>
+
+<script>
+var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_T8UyShcR4tTABICN8Z2U47XqC2IVT40h3EPG5-61MIwfOZXb0oHkXyQSZ_tq_V0X/exec";
+
+// ── Config: what each event type shows ──────────────────
+// zoom, food, agenda, slides, ercSlides
+var TYPE_CONFIG = {
+  "EdTalk": {
+    location: true, followingEvent: false,
+    zoom: true, food: true, agenda: false, slides: false, ercSlides: true,
+    speakers: true, eventName: false, miscWarning: false
+  },
+  "Happy Hour": {
+    location: true, followingEvent: true,
+    zoom: false, food: false, agenda: false, slides: false, ercSlides: false,
+    speakers: false, eventName: false, miscWarning: false
+  },
+  "Steering Committee": {
+    location: true, followingEvent: false,
+    zoom: true, food: true, agenda: true, slides: true, ercSlides: false,
+    speakers: false, eventName: false, miscWarning: false
+  },
+  "Advisory Committee": {
+    location: false, followingEvent: false,
+    zoom: true, food: false, agenda: true, slides: true, ercSlides: false,
+    speakers: false, eventName: false, miscWarning: false,
+    zoomDefault: true  // advisory is always on Zoom
+  },
+  "Internal Miscellaneous": {
+    location: true, followingEvent: false,
+    zoom: true, food: true, agenda: true, slides: false, ercSlides: false,
+    speakers: false, eventName: true, miscWarning: false
+  },
+  "Miscellaneous": {
+    location: true, followingEvent: false,
+    zoom: false, food: false, agenda: false, slides: false, ercSlides: false,
+    speakers: false, eventName: true, miscWarning: true
+  }
+};
+
+var currentType = "";  // full type string (e.g. "Steering Committee")
+var speakerCount = 0;
+
+// ── Type selector ────────────────────────────────────────
+document.getElementById("typeSelector").addEventListener("click", function(e) {
+  var btn = e.target.closest(".type-btn");
+  if (!btn || btn.classList.contains("sub-btn")) return;
+  var type = btn.dataset.type;
+
+  // Update button states
+  document.querySelectorAll("#typeSelector .type-btn:not(.sub-btn)").forEach(function(b) {
+    b.classList.remove("selected");
+  });
+  btn.classList.add("selected");
+  document.getElementById("eventType").value = type;
+
+  // Show/hide internal sub-section
+  var isInternal = type === "Internal";
+  document.getElementById("internalSubSection").classList.toggle("hidden", !isInternal);
+  document.getElementById("internalSubtype").value = "";
+  // Reset sub-btn selection
+  document.querySelectorAll(".sub-btn").forEach(function(b) { b.classList.remove("selected"); });
+
+  if (!isInternal) {
+    currentType = type;
+    applyConfig(type);
+  } else {
+    // Hide form content until sub-type chosen
+    hideFormContent();
+  }
+});
+
+// ── Sub-type selector ────────────────────────────────────
+document.getElementById("subTypeSelector").addEventListener("click", function(e) {
+  var btn = e.target.closest(".sub-btn");
+  if (!btn) return;
+  var sub = btn.dataset.sub;
+
+  document.querySelectorAll(".sub-btn").forEach(function(b) { b.classList.remove("selected"); });
+  btn.classList.add("selected");
+  document.getElementById("internalSubtype").value = sub;
+
+  currentType = sub;
+  applyConfig(sub);
+});
+
+// ── Apply config for a given type ───────────────────────
+function applyConfig(type) {
+  var cfg = TYPE_CONFIG[type];
+  if (!cfg) return;
+
+  // Cards
+  show("keyDetailsCard");
+  show("submitCard");
+  toggle("speakerCard", cfg.speakers);
+  toggle("eventNameCard", cfg.eventName);
+
+  // Fields within keyDetailsCard
+  toggle("locationField",       cfg.location);
+  toggle("followingEventField", cfg.followingEvent);
+  toggle("miscWarning",         cfg.miscWarning);
+
+  // Options pills
+  var hasAnyOption = cfg.zoom || cfg.food || cfg.agenda || cfg.slides || cfg.ercSlides;
+  toggle("optionsField", hasAnyOption);
+  toggle("zoomPillWrap",     cfg.zoom);
+  toggle("foodPillWrap",     cfg.food);
+  toggle("agendaPillWrap",   cfg.agenda);
+  toggle("slidesPillWrap",   cfg.slides);
+  toggle("ercSlidesPillWrap",cfg.ercSlides);
+
+  // Auto-check zoom for Advisory Committee
+  var zoomEl = document.getElementById("hasZoom");
+  if (cfg.zoomDefault) {
+    zoomEl.checked = true;
+  } else {
+    // Don't force uncheck — let user keep their selection unless switching types
+  }
+
+  // Speaker block: add first speaker if none yet
+  if (cfg.speakers && document.querySelectorAll(".speaker-block").length === 0) {
+    addSpeaker();
+  }
+}
+
+function hideFormContent() {
+  hide("keyDetailsCard");
+  hide("submitCard");
+  hide("speakerCard");
+  hide("eventNameCard");
+}
+
+function show(id) { document.getElementById(id).classList.remove("hidden"); }
+function hide(id) { document.getElementById(id).classList.add("hidden"); }
+function toggle(id, show) { document.getElementById(id).classList.toggle("hidden", !show); }
+
+// ── Speaker blocks ───────────────────────────────────────
+document.getElementById("addSpeakerBtn").addEventListener("click", addSpeaker);
+
+function addSpeaker() {
+  speakerCount++;
+  var n = speakerCount;
+  var block = document.createElement("div");
+  block.className = "speaker-block";
+  block.dataset.speakerId = n;
+  block.innerHTML =
+    '<div class="speaker-block-header">' +
+      '<span>Speaker ' + n + '</span>' +
+      (n > 1 ? '<button type="button" class="remove-speaker-btn" onclick="this.closest(\'.speaker-block\').remove()">Remove</button>' : '') +
+    '</div>' +
+    '<div class="field-row">' +
+      '<div class="field"><label>First Name <span class="req">*</span></label>' +
+        '<input type="text" name="sp_' + n + '_first" placeholder="First" autocomplete="off"></div>' +
+      '<div class="field"><label>Last Name <span class="req">*</span></label>' +
+        '<input type="text" name="sp_' + n + '_last" placeholder="Last" autocomplete="off"></div>' +
+    '</div>' +
+    '<div class="field">' +
+      '<label>Title / Role</label>' +
+      '<input type="text" name="sp_' + n + '_title" placeholder="e.g. Associate Professor" autocomplete="off">' +
+    '</div>' +
+    '<div class="field">' +
+      '<label>Department</label>' +
+      '<input type="text" name="sp_' + n + '_dept" placeholder="Department" autocomplete="off">' +
+    '</div>' +
+    '<div class="field">' +
+      '<div class="inst-toggle-row">' +
+        '<label>Texas A&amp;M?</label>' +
+        '<div class="inst-pill-group">' +
+          '<label class="inst-pill-option">' +
+            '<input type="radio" name="sp_' + n + '_tamu" value="yes" class="inst-pill-checkbox" checked>' +
+            '<span class="inst-pill-label">Yes</span>' +
+          '</label>' +
+          '<label class="inst-pill-option">' +
+            '<input type="radio" name="sp_' + n + '_tamu" value="no" class="inst-pill-checkbox">' +
+            '<span class="inst-pill-label">No</span>' +
+          '</label>' +
+        '</div>' +
+      '</div>' +
+      '<div class="hidden" id="instField_' + n + '">' +
+        '<input type="text" name="sp_' + n + '_inst" placeholder="Institution name">' +
+      '</div>' +
+    '</div>' +
+    '<div class="field">' +
+      '<label>Bio Link <span class="opt">optional</span></label>' +
+      '<input type="url" name="sp_' + n + '_bio" placeholder="https://...">' +
+    '</div>';
+  document.getElementById("speakersList").appendChild(block);
+
+  // Wire up TAMU radio to show/hide institution field
+  block.querySelectorAll('input[name="sp_' + n + '_tamu"]').forEach(function(radio) {
+    radio.addEventListener("change", function() {
+      var instDiv = document.getElementById("instField_" + n);
+      instDiv.classList.toggle("hidden", this.value === "yes");
+    });
+  });
+
+  // Style radios as pills using the inst-pill-checkbox trick
+  // (radio inputs can't use :checked + label without label wrapping them — already done above)
+}
+
+// ── Submit ───────────────────────────────────────────────
+document.getElementById("submitForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+
+  var typeVal = document.getElementById("eventType").value;
+  var subVal  = document.getElementById("internalSubtype").value;
+  var dateVal = document.getElementById("eventDate").value;
+
+  if (!typeVal) { showStatus("Please select an event type.", "error"); return; }
+  if (typeVal === "Internal" && !subVal) { showStatus("Please select an internal event type.", "error"); return; }
+  if (!dateVal) { showStatus("Please enter the event date.", "error"); return; }
+
+  // Collect speakers
+  var speakers = [];
+  document.querySelectorAll(".speaker-block").forEach(function(block) {
+    var n    = block.dataset.speakerId;
+    var first = val(block, '[name="sp_' + n + '_first"]');
+    var last  = val(block, '[name="sp_' + n + '_last"]');
+    if (!first && !last) return;
+    var tamuEl = block.querySelector('input[name="sp_' + n + '_tamu"]:checked');
+    var isTamu = tamuEl ? tamuEl.value === "yes" : true;
+    speakers.push({
+      name:  (first + " " + last).trim(),
+      title: val(block, '[name="sp_' + n + '_title"]'),
+      dept:  val(block, '[name="sp_' + n + '_dept"]'),
+      inst:  isTamu ? "Texas A&M University" : val(block, '[name="sp_' + n + '_inst"]'),
+      bioLink: val(block, '[name="sp_' + n + '_bio"]'),
+    });
+  });
+
+  // Validate speakers for EdTalk
+  if (typeVal === "EdTalk" && speakers.length === 0) {
+    showStatus("Please add at least one speaker.", "error"); return;
+  }
+
+  var finalType = typeVal === "Internal" ? subVal : typeVal;
+
+  var payload = {
+    action:           "submit",
+    eventType:        finalType,
+    eventDate:        dateVal,
+    startTime:        document.getElementById("startTime").value,
+    location:         checked("locationField") ? document.getElementById("location").value : "",
+    hasZoom:          document.getElementById("hasZoom").checked,
+    hasFood:          document.getElementById("hasFood").checked,
+    needsAgenda:      document.getElementById("needsAgenda").checked,
+    needsSlides:      document.getElementById("needsSlides").checked,
+    needsErcSlides:   document.getElementById("needsErcSlides").checked,
+    followingEvent:   document.getElementById("followingEvent").checked,
+    eventName:        document.getElementById("eventName").value,
+    speakers:         speakers,
+  };
+
+  var btn = document.getElementById("submitBtn");
+  btn.disabled = true; btn.textContent = "Submitting...";
+
+  fetch(APPS_SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.success) {
+      showStatus("Event submitted! You'll receive a confirmation shortly.", "success");
+      resetForm();
+    } else {
+      showStatus("Submission failed: " + (data.error || "Unknown error"), "error");
+    }
+  })
+  .catch(function() {
+    showStatus("Could not connect. Check your connection and try again.", "error");
+  })
+  .finally(function() {
+    btn.disabled = false; btn.textContent = "Submit Event";
+  });
+});
+
+function val(parent, sel) {
+  var el = parent.querySelector(sel);
+  return el ? el.value.trim() : "";
+}
+
+function checked(id) {
+  return !document.getElementById(id).classList.contains("hidden");
+}
+
+function resetForm() {
+  document.getElementById("submitForm").reset();
+  document.querySelectorAll(".type-btn").forEach(function(b) { b.classList.remove("selected"); });
+  document.getElementById("eventType").value = "";
+  document.getElementById("internalSubtype").value = "";
+  document.getElementById("internalSubSection").classList.add("hidden");
+  document.getElementById("speakersList").innerHTML = "";
+  speakerCount = 0;
+  hideFormContent();
+}
+
+function showStatus(msg, type) {
+  var el = document.getElementById("statusMsg");
+  el.textContent = msg;
+  el.className = "status-msg " + type;
+  el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+</script>
+</body>
+</html>

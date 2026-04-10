@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event — ERC Event Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;700&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 15px; background: #f5f5f5; color: #1a1a1a; min-height: 100vh;
+    }
+
+    .hidden { display: none !important; }
+
+    /* ── Header ─────────────────────────────────────────── */
+    .event-header { background: #500000; color: #fff; padding: 24px 24px 20px; }
+    .event-header-inner { max-width: 900px; margin: 0 auto; }
+    .back-link {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 0.8rem; color: rgba(255,255,255,0.65); text-decoration: none; margin-bottom: 10px;
+    }
+    .back-link:hover { color: #fff; }
+
+    .header-top {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    }
+    .header-title-block { flex: 1; }
+    .event-header h1 {
+      font-family: 'Work Sans', sans-serif; font-size: 1.45rem; font-weight: 700;
+      margin-bottom: 4px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    .type-badge-header {
+      display: inline-block; font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.04em; padding: 3px 10px; border-radius: 4px;
+      background: rgba(255,255,255,0.18); color: #fff; vertical-align: middle;
+    }
+    .event-header-meta {
+      font-size: 0.875rem; color: rgba(255,255,255,0.7); display: flex; gap: 14px;
+      flex-wrap: wrap; margin-bottom: 12px;
+    }
+
+    /* ── Progress in header ─────────────────────────────── */
+    .header-progress {
+      display: flex; align-items: center; gap: 10px; margin-top: 2px;
+    }
+    .header-progress-bar {
+      flex: 1; height: 5px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden;
+      max-width: 200px;
+    }
+    .header-progress-fill { height: 100%; background: rgba(255,255,255,0.85); border-radius: 3px; transition: width 0.4s; }
+    .header-progress-text { font-size: 0.78rem; color: rgba(255,255,255,0.7); white-space: nowrap; }
+
+    /* Edit page button in header */
+    .edit-page-btn {
+      font-size: 0.78rem; font-weight: 600; padding: 6px 14px; border-radius: 5px; cursor: pointer;
+      border: 1.5px solid rgba(255,255,255,0.4); background: transparent; color: rgba(255,255,255,0.85);
+      font-family: inherit; white-space: nowrap; flex-shrink: 0; margin-top: 4px; transition: all 0.15s;
+    }
+    .edit-page-btn:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.7); }
+    .edit-page-btn.active { background: #fff; color: #500000; border-color: #fff; }
+
+    /* ── Main ───────────────────────────────────────────── */
+    .event-main { max-width: 900px; margin: 0 auto; padding: 20px 24px 60px; }
+
+    /* ── Cards ──────────────────────────────────────────── */
+    .card {
+      background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;
+      padding: 20px 22px; margin-bottom: 18px;
+    }
+    .card h2 {
+      font-family: 'Work Sans', sans-serif; font-size: 0.9rem; font-weight: 700; color: #333;
+      margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.04em;
+    }
+
+    /* ── Editable fields ────────────────────────────────── */
+    .editable-field {
+      display: inline; outline: none; border-radius: 3px; transition: background 0.1s;
+    }
+    body.editing .editable-field {
+      background: rgba(80, 0, 0, 0.04); border-bottom: 1px dashed rgba(80, 0, 0, 0.3);
+      cursor: text; padding: 1px 3px; border-radius: 2px;
+    }
+    body.editing .editable-field:focus {
+      background: rgba(80, 0, 0, 0.07); outline: none;
+    }
+    .empty-field { color: #ccc; font-style: italic; }
+    body.editing .empty-field { color: #bbb; }
+
+    /* ── Detail grid ────────────────────────────────────── */
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px 20px; }
+    .detail-item label {
+      display: block; font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.05em; color: #aaa; margin-bottom: 3px;
+    }
+    .detail-item span { font-size: 0.9rem; color: #333; }
+    .detail-item.full-width { grid-column: 1 / -1; }
+
+    /* ── Links row ──────────────────────────────────────── */
+    .links-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+    .ext-link {
+      display: inline-flex; align-items: center; gap: 5px; font-size: 0.8rem; font-weight: 600;
+      color: #500000; background: #fdf0f0; padding: 6px 14px; border-radius: 5px;
+      text-decoration: none; transition: background 0.15s; border: 1px solid transparent;
+    }
+    .ext-link:hover { background: #f8dede; }
+    .ext-link .ext-icon { font-size: 0.7rem; opacity: 0.6; }
+    .ext-link.needs-link { color: #bbb; background: #fafafa; border: 1px dashed #ddd; cursor: default; }
+    .ext-link.needs-link:hover { background: #fafafa; }
+
+    /* ── Link edit section (edit mode only) ─────────────── */
+    .link-edit-section { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+    .link-edit-section .link-field label {
+      font-size: 0.68rem; font-weight: 600; color: #aaa; display: block;
+      margin-bottom: 4px; letter-spacing: 0.04em; text-transform: uppercase;
+    }
+    .link-edit-section input[type="url"] {
+      width: 100%; font-size: 0.82rem; padding: 6px 9px; border: 1.5px solid #ccc;
+      border-radius: 5px; font-family: inherit; outline: none; transition: border-color 0.15s; color: #333;
+    }
+    .link-edit-section input[type="url"]:focus { border-color: #500000; }
+
+    /* ── Description / blurb ────────────────────────────── */
+    .event-description { font-size: 0.9rem; line-height: 1.6; color: #444; }
+
+    .blurb-text {
+      font-size: 0.875rem; line-height: 1.6; color: #444;
+      background: #fafafa; border-radius: 6px; padding: 14px 16px;
+      border-left: 3px solid #500000;
+    }
+
+    /* ── Speaker ────────────────────────────────────────── */
+    .speaker-entry { padding: 14px 0; border-bottom: 1px solid #f0f0f0; }
+    .speaker-entry:last-child { border-bottom: none; }
+    .speaker-top { display: flex; align-items: flex-start; gap: 14px; }
+    .speaker-avatar {
+      width: 44px; height: 44px; border-radius: 50%; background: #eee;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; color: #aaa; flex-shrink: 0;
+    }
+    .speaker-info { flex: 1; }
+    .speaker-info h3 { font-size: 0.95rem; font-weight: 600; color: #333; }
+    .speaker-info .speaker-meta { font-size: 0.8rem; color: #888; margin-top: 2px; }
+    .speaker-details { margin-top: 10px; padding-left: 58px; }
+    .speaker-details .detail-row { display: flex; gap: 8px; font-size: 0.82rem; margin-bottom: 5px; }
+    .speaker-details .detail-label { font-weight: 600; color: #aaa; min-width: 110px; flex-shrink: 0; }
+
+    /* ── Promo log ──────────────────────────────────────── */
+    .promo-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .promo-table th {
+      text-align: left; font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.05em; color: #aaa; padding: 6px 4px; border-bottom: 1px solid #eee;
+    }
+    .promo-table td { padding: 8px 4px; border-bottom: 1px solid #f5f5f5; color: #333; vertical-align: middle; }
+    .status-badge {
+      font-size: 0.68rem; font-weight: 600; padding: 2px 8px; border-radius: 3px;
+      text-transform: uppercase; letter-spacing: 0.03em; cursor: pointer;
+    }
+    .status-pending { background: #fdf6ec; color: #7a5500; }
+    .status-sent    { background: #edfaf1; color: #1a6b3c; }
+    .status-na      { background: #f0f0f0; color: #999; }
+
+    /* ── Task filter bar ────────────────────────────────── */
+    .task-filter-bar { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 14px; }
+    .filter-btn {
+      font-family: 'Work Sans', sans-serif; font-size: 0.78rem; font-weight: 600;
+      padding: 4px 13px; border-radius: 12px; border: 1.5px solid #ddd;
+      background: #fff; color: #888; cursor: pointer; transition: all 0.15s;
+    }
+    .filter-btn:hover { border-color: #500000; color: #500000; }
+    .filter-btn.active { background: #500000; color: #fff; border-color: #500000; }
+
+    /* ── Task table ─────────────────────────────────────── */
+    .task-tbl { width: 100%; border-collapse: collapse; }
+    .task-tbl thead th {
+      font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+      color: #bbb; text-align: left; padding: 6px 8px; border-bottom: 1px solid #eee;
+    }
+    .task-check-cell { width: 28px; padding: 10px 6px 10px 4px; vertical-align: top; }
+    .task-check { width: 16px; height: 16px; margin-top: 1px; accent-color: #500000; cursor: pointer; }
+    .task-name-cell { padding: 10px 8px; vertical-align: top; }
+    .task-due-cell { width: 68px; padding: 10px 8px; vertical-align: top; font-size: 0.78rem; color: #aaa; white-space: nowrap; }
+    .task-due-cell.overdue { color: #c0392b; font-weight: 600; }
+    .task-due-cell.today   { color: #500000; font-weight: 600; }
+    .task-who-cell { width: 44px; padding: 10px 4px 10px 8px; vertical-align: top; text-align: right; }
+    .task-main-row { border-bottom: 1px solid #f5f5f5; }
+    .task-main-row:hover .task-name-cell { background: #fafafa; }
+    .task-main-row.done .task-name-text { text-decoration: line-through; color: #bbb; }
+    .task-name-text { font-size: 0.875rem; color: #1a1a1a; line-height: 1.4; }
+    .task-badge {
+      display: inline-block; font-size: 0.68rem; font-weight: 700; color: #666;
+      background: #f0f0f0; padding: 2px 6px; border-radius: 3px;
+    }
+    .task-badge.done-badge { background: #edfaf1; color: #1a6b3c; }
+    .expand-btn {
+      font-size: 0.65rem; color: #ccc; background: none; border: none; cursor: pointer;
+      padding: 0 4px; vertical-align: middle; transition: color 0.15s;
+    }
+    .expand-btn:hover { color: #500000; }
+    .task-detail-row td { padding: 0 8px 10px 36px; font-size: 0.78rem; }
+    .task-note-text { color: #999; line-height: 1.5; }
+    .section-divider-row td {
+      font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
+      color: #500000; padding: 14px 8px 6px; border-bottom: 1px solid #f0f0f0;
+    }
+    .filter-hidden { display: none; }
+
+    /* ── Inline initials input ──────────────────────────── */
+    .initials-inline {
+      display: flex; align-items: center; gap: 6px; margin-top: 5px; flex-wrap: wrap;
+    }
+    .initials-input {
+      font-family: 'Work Sans', sans-serif; font-size: 0.8rem; font-weight: 700;
+      width: 44px; padding: 4px 6px; border: 1.5px solid #500000; border-radius: 4px;
+      text-transform: uppercase; text-align: center; letter-spacing: 0.05em; outline: none;
+      color: #500000;
+    }
+    .mark-done-btn {
+      font-family: inherit; font-size: 0.78rem; font-weight: 700;
+      background: #500000; color: #fff; border: none; border-radius: 4px;
+      padding: 4px 10px; cursor: pointer; transition: background 0.15s;
+    }
+    .mark-done-btn:hover { background: #3a0000; }
+    .initials-cancel {
+      font-size: 0.72rem; color: #aaa; background: none; border: none; cursor: pointer;
+      font-family: inherit; padding: 0 2px;
+    }
+    .initials-cancel:hover { color: #500000; }
+    .task-done-msg {
+      font-size: 0.75rem; font-weight: 600; color: #1a6b3c;
+    }
+
+    @media (max-width: 700px) {
+      .detail-grid { grid-template-columns: 1fr 1fr; }
+      .speaker-details { padding-left: 0; }
+      .header-top { flex-direction: column; gap: 8px; }
+    }
+    @media (max-width: 480px) {
+      .detail-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="event-header">
+  <div class="event-header-inner">
+    <a href="index.html" class="back-link">&larr; Event Hub</a>
+    <div class="header-top">
+      <div class="header-title-block">
+        <h1 id="eventTitle">Loading...</h1>
+        <div class="event-header-meta" id="eventMeta"></div>
+        <div class="header-progress" id="headerProgress"></div>
+      </div>
+      <button class="edit-page-btn" id="editPageBtn">Edit Page</button>
+    </div>
+  </div>
+</header>
+
+<main class="event-main">
+
+  <div class="card" id="detailsCard">
+    <h2>Key Details</h2>
+    <div class="detail-grid" id="detailGrid"></div>
+    <div class="links-row" id="linkTabs"></div>
+    <div class="link-edit-section hidden" id="linkEditSection"></div>
+  </div>
+
+  <div class="card" id="descriptionCard">
+    <h2>Description</h2>
+    <div class="event-description" id="eventDescription"></div>
+  </div>
+
+  <div class="card hidden" id="speakerCard">
+    <h2>Speaker Info</h2>
+    <div id="speakerList"></div>
+  </div>
+
+  <div class="card hidden" id="blurbCard">
+    <h2>Newsletter Blurb</h2>
+    <div class="blurb-text" id="blurbText"></div>
+  </div>
+
+  <div class="card" id="promoCard">
+    <h2>Promotion Log</h2>
+    <table class="promo-table">
+      <thead><tr><th>Channel</th><th>Status</th><th>Date Sent</th></tr></thead>
+      <tbody id="promoBody"></tbody>
+    </table>
+  </div>
+
+  <div id="taskSection"></div>
+
+</main>
+
+<script>
+// =============================================================
+// CONFIG — replace with live Apps Script URL once deployed
+// =============================================================
+var APPS_SCRIPT_URL = "https://script.google.com/macros/s/YOUR_DEPLOY_ID/exec";
+
+var TEAM_INITIALS = ["KB", "CM", "AK", "GA"];
+
+// =============================================================
+// EVENT DATA (mock — will pull from Apps Script / Sheets)
+// =============================================================
+var EVENT_DATA = {
+
+  "itw-faculty-research-2026": {
+    name: "In the Works: Faculty Research",
+    type: "In the Works",
+    date: "2026-04-23",
+    time: "2:30 \u2013 4:30 PM",
+    location: "MSC 2404",
+    hasFood: false,
+    hasZoom: false,
+    rsvpLink: "https://docs.google.com/forms/d/e/1FAIpQLSfO9U2qJ84Aq6DyGEjMSxdM2JZwaj22fUx6wjcpIrebX6XOJA/viewform",
+    flyerLink: "https://drive.google.com/file/d/1cncgjnRKgXgd2PGmK7FDl6yl--uAtKOX/view",
+    eventDocLink: "https://docs.google.com/document/d/1QF5tGnuXBEeXxYM3yHNnk38sALK2tlY8vluYbVPJ7IY/edit",
+    estimatedAttendance: "~50",
+    description: "In the Works: Faculty Research is a faculty research showcase hosted by the ERC as part of the Summer 2026 Graduate Research Program. Faculty who have applied to the program will present their current projects, giving graduate students the chance to learn about available work and rank their preferences for matching. The event is open to all, not just those participating in the program, and is a great way to see the range of research happening across the ERC community.",
+    note: "This event is tied to our Graduate Summer Research Program",
+    blurb: "Want a peek at what ERC faculty are working on this summer? Join us on April 23rd from 2:30\u20134:30 PM for In the Works: Faculty Research \u2014 a showcase where faculty briefly present their current projects. Graduate students will use this event to rank project preferences for the ERC Summer Research Program, but everyone is welcome. Stay tuned for location and RSVP details.",
+    speakers: [],
+    promoLog: [
+      { channel: "ERC Newsletter", status: "Pending", dateSent: "" },
+      { channel: "ERC Website", status: "Pending", dateSent: "" },
+      { channel: "CEHD MarCom", status: "Pending", dateSent: "" },
+      { channel: "Robin Alderete (TLAC)", status: "Pending", dateSent: "" },
+      { channel: "Kerri Smith (Grad Students)", status: "Pending", dateSent: "" },
+    ],
+    tasks: [
+      { task: "Reserve room", category: "Logistics", initials: "CM", dueDate: "4/1/2026", done: false, note: "Book the room and confirm A/V plus any food rules. Send room confirmation to Kate and Andy." },
+      { task: "Search for speaker bio, headshot, abstract + presentation title", category: "Logistics", initials: "CM", dueDate: "4/1/2026", done: false, note: "Search online only \u2014 do not email the speaker. Store info on the event doc." },
+      { task: "Finalize event details on event page", category: "Logistics", initials: "CM", dueDate: "4/1/2026", done: false },
+      { task: "Prepare marketing assets (blurb, flyer, ERC intro slides, bio snippet)", category: "Promo", initials: "KB", dueDate: "4/3/2026", done: false },
+      { task: "Create RSVP form", category: "Logistics", initials: "CM", dueDate: "4/3/2026", done: false, note: "Build Google Form: name, email, affiliation, dietary restrictions. Share with Kate (edit access). Verify form works before sharing." },
+      { task: "Publish on ERC website", category: "Promo", initials: "KB", dueDate: "4/6/2026", done: false },
+      { task: "Add to ERC newsletter", category: "Promo", initials: "KB", dueDate: "4/6/2026", done: false },
+      { task: "Submit CEHD MarCom calendar request", category: "Promo", initials: "CM", dueDate: "4/6/2026", done: false },
+      { task: "Email Robin Alderete (TLAC listserv)", category: "Promo", initials: "CM", dueDate: "4/6/2026", done: false },
+      { task: "Email Kerri Smith (grad students)", category: "Promo", initials: "CM", dueDate: "4/6/2026", done: false },
+      { task: "Submit TLAC purchase request", category: "Food", initials: "AK", dueDate: "4/6/2026", done: false },
+      { task: "Confirm headcount", category: "Food", initials: "CM", dueDate: "4/16/2026", done: false },
+      { task: "Place catering order", category: "Food", initials: "CM", dueDate: "4/16/2026", done: false, note: "Log into EZCater. Slack Andy first \u2014 he needs to approve 2FA." },
+      { task: "Send 1-week reminder \u2014 ERC listserv", category: "Promo", initials: "KB", dueDate: "4/16/2026", done: false },
+      { task: "Circle back \u2014 finalize GRP student ranking + follow-up plan", category: "Logistics", initials: "KB", dueDate: "4/16/2026", done: false, note: "Follow up on GRP student selections and next steps with Andy." },
+      { task: "Send calendar invite to speaker(s)", category: "Logistics", initials: "KB", dueDate: "4/16/2026", done: false },
+      { task: "Send day-before reminder \u2014 ERC listserv", category: "Promo", initials: "KB", dueDate: "4/22/2026", done: false },
+      { task: "Send day-of reminder \u2014 ERC listserv", category: "Promo", initials: "KB", dueDate: "4/23/2026", done: false },
+      { task: "Pre-departure: pack event bag", category: "Logistics", initials: "KB", dueDate: "4/23/2026", done: false },
+      { task: "Record attendance", category: "Logistics", initials: "KB", dueDate: "4/23/2026", done: false, note: "Count attendees. Note no-shows and walk-ins." },
+      { task: "Log attendance on event doc", category: "Wrap-up", initials: "KB", dueDate: "4/24/2026", done: false },
+      { task: "Submit receipts", category: "Wrap-up", initials: "AK", dueDate: "4/24/2026", done: false },
+    ],
+  },
+
+  "happy-hour-spring-2026": {
+    name: "ERC Happy Hour",
+    type: "Happy Hour",
+    date: "2026-04-23",
+    time: "5:00 PM",
+    location: "TBD",
+    hasFood: true, hasZoom: false,
+    rsvpLink: "", flyerLink: "", eventDocLink: "",
+    estimatedAttendance: "",
+    description: "",
+    note: "",
+    blurb: "",
+    speakers: [],
+    promoLog: [
+      { channel: "ERC Newsletter", status: "Pending", dateSent: "" },
+      { channel: "ERC Website", status: "Pending", dateSent: "" },
+      { channel: "Robin Alderete (TLAC)", status: "Pending", dateSent: "" },
+      { channel: "Kerri Smith (Grad Students)", status: "Pending", dateSent: "" },
+    ],
+    tasks: [
+      { task: "Secure venue + confirm drinks/alcohol plan", category: "Logistics", initials: "AK", dueDate: "4/1/2026", done: false },
+      { task: "Prepare marketing assets (blurb, flyer, ERC intro slides)", category: "Promo", initials: "KB", dueDate: "4/3/2026", done: false },
+      { task: "Create calendar event + share link", category: "Logistics", initials: "CM", dueDate: "4/3/2026", done: false },
+      { task: "Publish on ERC website", category: "Promo", initials: "KB", dueDate: "4/6/2026", done: false },
+      { task: "Add to ERC newsletter", category: "Promo", initials: "KB", dueDate: "4/6/2026", done: false },
+      { task: "Email Robin Alderete (TLAC listserv)", category: "Promo", initials: "CM", dueDate: "4/6/2026", done: false },
+      { task: "Email Kerri Smith (grad students)", category: "Promo", initials: "CM", dueDate: "4/6/2026", done: false },
+      { task: "Submit TLAC purchase request", category: "Food", initials: "AK", dueDate: "4/6/2026", done: false },
+      { task: "Estimate attendance", category: "Logistics", initials: "KB", dueDate: "4/6/2026", done: false },
+      { task: "Place order", category: "Food", initials: "CM", dueDate: "4/16/2026", done: false },
+      { task: "Send 1-week reminder \u2014 ERC listserv", category: "Promo", initials: "KB", dueDate: "4/16/2026", done: false },
+      { task: "Prep name tags + supplies bag", category: "Logistics", initials: "KB", dueDate: "4/22/2026", done: false, note: "Pack name tags, markers, and any other event supplies in the event bag." },
+      { task: "Send day-before reminder \u2014 ERC listserv", category: "Promo", initials: "KB", dueDate: "4/22/2026", done: false },
+      { task: "Send day-of reminder \u2014 ERC listserv", category: "Promo", initials: "KB", dueDate: "4/23/2026", done: false },
+      { task: "Record attendance", category: "Logistics", initials: "KB", dueDate: "4/23/2026", done: false },
+      { task: "Log attendance on event doc", category: "Wrap-up", initials: "KB", dueDate: "4/24/2026", done: false },
+      { task: "Submit receipts", category: "Wrap-up", initials: "AK", dueDate: "4/24/2026", done: false },
+    ],
+  },
+
+  "edtalk-woltering-2026": {
+    name: "EdTalk: Steven Woltering",
+    type: "EdTalk",
+    date: "2026-05-06",
+    time: "12:00 PM",
+    location: "TBD",
+    hasFood: true, hasZoom: false,
+    rsvpLink: "", flyerLink: "", eventDocLink: "",
+    estimatedAttendance: "",
+    description: "",
+    note: "",
+    blurb: "",
+    speakers: [
+      { name: "Dr. Steven Woltering", title: "", department: "", institution: "Texas A&M University", presentationTitle: "", abstract: "" },
+    ],
+    promoLog: [
+      { channel: "ERC Newsletter", status: "Pending", dateSent: "" },
+      { channel: "ERC Website", status: "Pending", dateSent: "" },
+      { channel: "CEHD MarCom", status: "Pending", dateSent: "" },
+      { channel: "Robin Alderete (TLAC)", status: "Pending", dateSent: "" },
+      { channel: "Kerri Smith (Grad Students)", status: "Pending", dateSent: "" },
+    ],
+    tasks: [
+      { task: "Reserve room", category: "Logistics", initials: "CM", dueDate: "4/13/2026", done: false, note: "Book room + confirm A/V and food rules. Send room confirmation to Kate and Andy." },
+      { task: "Search for speaker bio, headshot, abstract + presentation title", category: "Logistics", initials: "CM", dueDate: "4/13/2026", done: false, note: "Search online only \u2014 do not email the speaker." },
+      { task: "Prepare marketing assets (blurb, flyer, ERC intro slides, bio snippet)", category: "Promo", initials: "KB", dueDate: "4/13/2026", done: false },
+      { task: "Create RSVP form", category: "Logistics", initials: "CM", dueDate: "4/13/2026", done: false, note: "Build Google Form: name, email, affiliation, dietary restrictions. Share with Kate (edit access). Verify form works before sharing." },
+      { task: "Publish on ERC website", category: "Promo", initials: "KB", dueDate: "4/16/2026", done: false },
+      { task: "Add to ERC newsletter", category: "Promo", initials: "KB", dueDate: "4/16/2026", done: false },
+      { task: "Submit CEHD MarCom calendar request", category: "Promo", initials: "CM", dueDate: "4/16/2026", done: false },
+      { task: "Email Robin Alderete (TLAC listserv)", category: "Promo", initials: "CM", dueDate: "4/16/2026", done: false },
+      { task: "Email Kerri Smith (grad students)", category: "Promo", initials: "CM", dueDate: "4/16/2026", done: false },
+      { task: "Submit TLAC purchase request", category: "Food", initials: "AK", dueDate: "4/16/2026", done: false },
+      { task: "Confirm headcount", category: "Food", initials: "CM", dueDate: "4/29/2026", done: false },
+      { task: "Place catering order", category: "Food", initials: "CM", dueDate: "4/29/2026", done: false, note: "Log into EZCater. Slack Andy first \u2014 he needs to approve 2FA." },
+      { task: "Send 1-week reminder \u2014 ERC listserv", category: "Promo", initials: "KB", dueDate: "4/29/2026", done: false },
+      { task: "Send calendar invite to speaker", category: "Logistics", initials: "KB", dueDate: "4/29/2026", done: false },
+      { task: "Send day-before reminder \u2014 ERC listserv", category: "Promo", initials: "KB", dueDate: "5/5/2026", done: false },
+      { task: "Send day-of reminder \u2014 ERC listserv", category: "Promo", initials: "KB", dueDate: "5/6/2026", done: false },
+      { task: "Pre-departure: pack event bag", category: "Logistics", initials: "KB", dueDate: "5/6/2026", done: false },
+      { task: "Record attendance", category: "Logistics", initials: "KB", dueDate: "5/6/2026", done: false },
+      { task: "Log attendance on event doc", category: "Wrap-up", initials: "KB", dueDate: "5/7/2026", done: false },
+      { task: "Send thank-you email to speaker(s)", category: "Wrap-up", initials: "AK", dueDate: "5/7/2026", done: false },
+      { task: "Submit receipts", category: "Wrap-up", initials: "AK", dueDate: "5/7/2026", done: false },
+    ],
+  },
+};
+
+// =============================================================
+// INIT
+// =============================================================
+var params  = new URLSearchParams(window.location.search);
+var eventId = params.get("id");
+var ev      = EVENT_DATA[eventId];
+
+if (!ev) {
+  document.getElementById("eventTitle").textContent = "Event not found";
+} else {
+  renderEvent(ev);
+}
+
+// =============================================================
+// RENDER
+// =============================================================
+function renderEvent(ev) {
+  document.title = ev.name + " \u2014 ERC Event Hub";
+  document.getElementById("eventTitle").innerHTML =
+    ev.name + ' <span class="type-badge-header">' + ev.type + '</span>';
+
+  var eventDate = new Date(ev.date + "T12:00:00");
+  var dateStr = eventDate.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+  document.getElementById("eventMeta").innerHTML =
+    '<span>' + dateStr + '</span>' +
+    (ev.time ? '<span>' + ev.time + '</span>' : '') +
+    (ev.location && ev.location !== "TBD" ? '<span>' + ev.location + '</span>' : '');
+
+  // ── Key Details
+  var grid = document.getElementById("detailGrid");
+  var fields = [
+    { label: "Date",            value: dateStr,               key: "date" },
+    { label: "Time",            value: ev.time,               key: "time" },
+    { label: "Location",        value: ev.location,           key: "location" },
+  ];
+  if (ev.hasFood)             fields.push({ label: "Food / Catering", value: "Yes",                  key: "food" });
+  if (ev.hasZoom)             fields.push({ label: "Zoom",            value: "Yes",                  key: "zoom" });
+  if (ev.estimatedAttendance) fields.push({ label: "Est. Attendance", value: ev.estimatedAttendance, key: "attendance" });
+  fields.forEach(function(d) {
+    var item = document.createElement("div");
+    item.className = "detail-item";
+    var val = d.value || "";
+    var isEmpty = !val || val === "TBD";
+    item.innerHTML =
+      '<label>' + d.label + '</label>' +
+      '<span class="editable-field' + (isEmpty ? ' empty-field' : '') +
+      '" data-key="' + d.key + '" contenteditable="false">' +
+      (isEmpty ? "—" : val) + '</span>';
+    grid.appendChild(item);
+  });
+
+  if (ev.note) {
+    var noteItem = document.createElement("div");
+    noteItem.className = "detail-item full-width";
+    noteItem.innerHTML = '<label>Note</label><span class="editable-field" data-key="note" contenteditable="false" style="font-size:0.85rem;color:#7a5500;">' + ev.note + '</span>';
+    grid.appendChild(noteItem);
+  }
+
+  // ── Links row
+  var ERC_ZOOM_URL = "https://tamu.zoom.us/j/3728395283?pwd=WoTHqt6Ppbw0XSYEAiQqMFLNd6Ba8W.1";
+  var lr = document.getElementById("linkTabs");
+  var linkEditSection = document.getElementById("linkEditSection");
+
+  var externalTypes = ["EdTalk", "In the Works", "Miscellaneous"];
+  var hasRsvp = externalTypes.indexOf(ev.type) !== -1;
+  var linkDefs = [];
+  if (hasRsvp) linkDefs.push({ label: "RSVP Form", urlKey: "rsvpLink", key: "rsvp" });
+  linkDefs.push({ label: "Flyer / Graphic", urlKey: "flyerLink", key: "flyer" });
+
+  linkDefs.forEach(function(ld) {
+    var url = ev[ld.urlKey] || "";
+    // View pill
+    var a = document.createElement("a");
+    a.dataset.linkKey = ld.key;
+    a.className = "ext-link link-view";
+    if (url) {
+      a.href = url; a.target = "_blank"; a.rel = "noopener";
+      a.innerHTML = ld.label + ' <span class="ext-icon">&#8599;</span>';
+    } else {
+      a.href = "#"; a.classList.add("needs-link");
+      a.innerHTML = ld.label + ' <span class="ext-icon">[needs link]</span>';
+      a.addEventListener("click", function(e) { e.preventDefault(); });
+    }
+    lr.appendChild(a);
+
+    // Edit input (shown only in edit mode)
+    var wrap = document.createElement("div");
+    wrap.className = "link-field";
+    wrap.innerHTML =
+      '<label>' + ld.label + '</label>' +
+      '<input type="url" class="link-edit-input" data-link-key="' + ld.key +
+      '" data-url-key="' + ld.urlKey + '" value="' + url + '" placeholder="Paste URL...">';
+    linkEditSection.appendChild(wrap);
+  });
+
+  // Zoom — only show if this event has Zoom
+  if (ev.hasZoom) {
+    var zoomA = document.createElement("a");
+    zoomA.href = ERC_ZOOM_URL; zoomA.target = "_blank"; zoomA.rel = "noopener";
+    zoomA.className = "ext-link";
+    zoomA.title = "Meeting ID: 372 839 5283 \u00b7 Passcode: erc2026";
+    zoomA.innerHTML = 'Zoom <span class="ext-icon">&#8599;</span>';
+    lr.appendChild(zoomA);
+  }
+
+  // ── Description
+  var descEl = document.getElementById("eventDescription");
+  if (ev.description) {
+    descEl.innerHTML = '<span class="editable-field" data-key="description" contenteditable="false">' + ev.description + '</span>';
+  } else {
+    descEl.innerHTML = '<span class="editable-field empty-field" data-key="description" contenteditable="false">No description yet.</span>';
+  }
+
+  // ── Speakers
+  if (ev.speakers && ev.speakers.length > 0) {
+    document.getElementById("speakerCard").classList.remove("hidden");
+    var sl = document.getElementById("speakerList");
+    ev.speakers.forEach(function(s) {
+      var ini = s.name.split(" ").filter(Boolean).map(function(w) { return w[0]; }).join("").substring(0, 2);
+      var entry = document.createElement("div");
+      entry.className = "speaker-entry";
+      var details = [
+        { label: "Title", val: s.title },
+        { label: "Department", val: s.department },
+        { label: "Institution", val: s.institution },
+        { label: "Talk Title", val: s.presentationTitle },
+        { label: "Abstract", val: s.abstract },
+      ];
+      var detailsHTML = details.map(function(f) {
+        return '<div class="detail-row"><span class="detail-label">' + f.label + '</span>' +
+          '<span class="editable-field' + (!f.val ? ' empty-field' : '') + '" contenteditable="false">' +
+          (f.val || "\u2014") + '</span></div>';
+      }).join("");
+      entry.innerHTML =
+        '<div class="speaker-top"><div class="speaker-avatar">' + ini + '</div>' +
+        '<div class="speaker-info"><h3>' + s.name + '</h3>' +
+        (s.institution ? '<p class="speaker-meta">' + s.institution + '</p>' : '') +
+        '</div></div><div class="speaker-details">' + detailsHTML + '</div>';
+      sl.appendChild(entry);
+    });
+  }
+
+  // ── Blurb (show for external events)
+  var isExternal = externalTypes.indexOf(ev.type) !== -1 || ev.type === "Happy Hour";
+  if (isExternal) {
+    document.getElementById("blurbCard").classList.remove("hidden");
+    document.getElementById("blurbText").innerHTML =
+      '<span class="editable-field' + (!ev.blurb ? ' empty-field' : '') + '" data-key="blurb" contenteditable="false">' +
+      (ev.blurb || 'No newsletter blurb yet. Click \u201cEdit Page\u201d to add one.') + '</span>';
+  }
+
+  // ── Promo log
+  var pb = document.getElementById("promoBody");
+  if (ev.promoLog && ev.promoLog.length) {
+    ev.promoLog.forEach(function(p) {
+      var isSent = p.status === "Sent";
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td style="font-size:0.875rem;">' + p.channel + '</td>' +
+        '<td>' +
+          '<label style="display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;">' +
+            '<input type="checkbox" class="promo-check" style="width:15px;height:15px;accent-color:#500000;cursor:pointer;flex-shrink:0;"' + (isSent ? " checked" : "") + '>' +
+            '<span class="promo-status-label" style="font-size:0.78rem;font-weight:600;color:' + (isSent ? "#1a6b3c" : "#bbb") + ';">' + (isSent ? "Sent" : "Pending") + '</span>' +
+          '</label>' +
+        '</td>' +
+        '<td class="promo-date-cell" style="font-size:0.82rem;color:#666;">' + (p.dateSent || "") + '</td>';
+
+      var checkEl  = tr.querySelector(".promo-check");
+      var labelEl  = tr.querySelector(".promo-status-label");
+      var dateCell = tr.querySelector(".promo-date-cell");
+
+      checkEl.addEventListener("change", function() {
+        if (this.checked) {
+          p.status = "Sent";
+          labelEl.textContent = "Sent";
+          labelEl.style.color = "#1a6b3c";
+          if (!p.dateSent) {
+            var today = new Date();
+            p.dateSent = (today.getMonth()+1) + "/" + today.getDate() + "/" + today.getFullYear();
+            dateCell.textContent = p.dateSent;
+          }
+        } else {
+          p.status = "Pending";
+          labelEl.textContent = "Pending";
+          labelEl.style.color = "#bbb";
+          p.dateSent = "";
+          dateCell.textContent = "";
+        }
+        // TODO: sync to sheet
+      });
+
+      pb.appendChild(tr);
+    });
+  } else {
+    document.getElementById("promoCard").classList.add("hidden");
+  }
+
+  // ── Tasks
+  renderTasks();
+
+  // ── Progress
+  renderProgress();
+
+  // ── Edit page toggle
+  var editBtn = document.getElementById("editPageBtn");
+  var editing = false;
+  editBtn.addEventListener("click", function() {
+    editing = !editing;
+    document.body.classList.toggle("editing", editing);
+    editBtn.textContent = editing ? "Done Editing" : "Edit Page";
+    editBtn.classList.toggle("active", editing);
+
+    // Toggle contenteditable on all .editable-field elements
+    document.querySelectorAll(".editable-field").forEach(function(el) {
+      el.contentEditable = editing ? "true" : "false";
+      if (!editing) {
+        var isEmpty = !el.textContent.trim() || el.textContent.trim() === "\u2014";
+        el.classList.toggle("empty-field", isEmpty);
+        // TODO: save changes to sheet
+      }
+    });
+
+    // Toggle link pill visibility vs edit inputs
+    document.querySelectorAll(".link-view").forEach(function(el) {
+      el.classList.toggle("hidden", editing);
+    });
+    document.getElementById("linkEditSection").classList.toggle("hidden", !editing);
+
+    // On exit edit mode — update link pills from input values
+    if (!editing) {
+      document.querySelectorAll(".link-edit-input").forEach(function(input) {
+        var key     = input.dataset.linkKey;
+        var urlKey  = input.dataset.urlKey;
+        var url     = input.value.trim();
+        var pill    = document.querySelector('.link-view[data-link-key="' + key + '"]');
+        var label   = key === "rsvp" ? "RSVP Form" : "Flyer / Graphic";
+        if (pill) {
+          if (url) {
+            pill.href = url;
+            pill.classList.remove("needs-link");
+            pill.innerHTML = label + ' <span class="ext-icon">&#8599;</span>';
+            pill.onclick = null;
+          } else {
+            pill.href = "#";
+            pill.classList.add("needs-link");
+            pill.innerHTML = label + ' <span class="ext-icon">[needs link]</span>';
+          }
+        }
+        if (urlKey) ev[urlKey] = url;
+        // TODO: save to sheet
+      });
+    }
+
+    if (editing) {
+      var first = document.querySelector(".editable-field");
+      if (first) first.focus();
+    }
+  });
+}
+
+// =============================================================
+// RENDER TASKS — date-sorted table with "Due This Week" divider
+// =============================================================
+function renderTasks() {
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+  var endOfWeek = new Date(today); endOfWeek.setDate(endOfWeek.getDate() + 7);
+
+  function parseDue(str) {
+    var dp = str.split("/");
+    return new Date(parseInt(dp[2]), parseInt(dp[0]) - 1, parseInt(dp[1]));
+  }
+  function fmtDue(str) {
+    return parseDue(str).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+  function dueCls(t) {
+    if (t.done) return "";
+    var d = parseDue(t.dueDate);
+    if (d < today) return " overdue";
+    if (d.getTime() === today.getTime()) return " today";
+    return "";
+  }
+
+  var sec = document.getElementById("taskSection");
+  sec.innerHTML = "";
+
+  // ── Wrap in card
+  var card = document.createElement("div");
+  card.className = "card";
+
+  var h2 = document.createElement("h2");
+  h2.textContent = "Tasks";
+  card.appendChild(h2);
+
+  // ── Filter bar
+  var filterBar = document.createElement("div");
+  filterBar.className = "task-filter-bar";
+  filterBar.innerHTML =
+    '<button class="filter-btn active" data-filter="all">All</button>' +
+    '<button class="filter-btn" data-filter="KB">KB</button>' +
+    '<button class="filter-btn" data-filter="CM">CM</button>' +
+    '<button class="filter-btn" data-filter="AK">AK</button>' +
+    '<button class="filter-btn" data-filter="GA">GA</button>';
+  card.appendChild(filterBar);
+
+  var activeFilter = "all";
+  filterBar.addEventListener("click", function(e) {
+    var btn = e.target.closest(".filter-btn");
+    if (!btn) return;
+    activeFilter = btn.dataset.filter;
+    filterBar.querySelectorAll(".filter-btn").forEach(function(b) { b.classList.remove("active"); });
+    btn.classList.add("active");
+    applyFilter();
+  });
+
+  function applyFilter() {
+    tbl.querySelectorAll(".task-main-row, .task-detail-row").forEach(function(row) {
+      var who = row.dataset.who || "";
+      var hide = activeFilter !== "all" && who !== activeFilter;
+      row.classList.toggle("filter-hidden", hide);
+    });
+  }
+
+  // ── Sort by due date
+  var sorted = ev.tasks.slice().sort(function(a, b) {
+    return parseDue(a.dueDate) - parseDue(b.dueDate);
+  });
+  var thisWeek = sorted.filter(function(t) { return parseDue(t.dueDate) <= endOfWeek; });
+  var upcoming = sorted.filter(function(t) { return parseDue(t.dueDate) > endOfWeek; });
+
+  // ── Build table
+  var tbl = document.createElement("table");
+  tbl.className = "task-tbl";
+  tbl.innerHTML = '<thead><tr>' +
+    '<th></th><th>Task</th><th>Due</th><th>Who</th>' +
+    '</tr></thead>';
+  var tbody = document.createElement("tbody");
+
+  function addDivider(label) {
+    var tr = document.createElement("tr");
+    tr.className = "section-divider-row";
+    tr.innerHTML = '<td colspan="4">' + label + '</td>';
+    tbody.appendChild(tr);
+  }
+
+  function addTaskRow(t) {
+    var dc = dueCls(t);
+
+    // ── Main row
+    var mainRow = document.createElement("tr");
+    mainRow.className = "task-main-row" + (t.done ? " done" : "");
+    mainRow.dataset.who = t.completedBy || t.initials;
+    mainRow.innerHTML =
+      '<td class="task-check-cell"><input type="checkbox" class="task-check"' + (t.done ? " checked" : "") + '></td>' +
+      '<td class="task-name-cell">' +
+        '<span class="task-name-text">' + t.task + '</span>' +
+        (t.note ? ' <button type="button" class="expand-btn" title="Show note">&#9656;</button>' : '') +
+      '</td>' +
+      '<td class="task-due-cell' + dc + '">' + fmtDue(t.dueDate) + '</td>' +
+      '<td class="task-who-cell"><span class="task-badge' + (t.done ? ' done-badge' : '') + '">' + (t.completedBy || t.initials) + '</span></td>';
+    tbody.appendChild(mainRow);
+
+    // ── Detail row (note + initials flow lives here)
+    var detailRow = document.createElement("tr");
+    detailRow.className = "task-detail-row hidden";
+    detailRow.dataset.who = t.completedBy || t.initials;
+    var detailCell = document.createElement("td");
+    detailCell.colSpan = 4;
+    detailCell.className = "task-detail-cell";
+    if (t.note) detailCell.innerHTML = '<div class="task-note-text">' + t.note + '</div>';
+    detailRow.appendChild(detailCell);
+    tbody.appendChild(detailRow);
+
+    // Expand/collapse note
+    if (t.note) {
+      var expandBtn = mainRow.querySelector(".expand-btn");
+      var noteOpen = false;
+      expandBtn.addEventListener("click", function() {
+        noteOpen = !noteOpen;
+        this.innerHTML = noteOpen ? "&#9662;" : "&#9656;";
+        if (!detailRow.querySelector(".initials-inline")) {
+          detailRow.classList.toggle("hidden", !noteOpen);
+        }
+      });
+    }
+
+    // Checkbox → initials flow
+    var cb = mainRow.querySelector(".task-check");
+    cb.addEventListener("change", function() {
+      if (this.checked) {
+        showInlineInitials(t, mainRow, detailRow, detailCell, this);
+      } else {
+        t.done = false; t.completedBy = null;
+        mainRow.classList.remove("done");
+        mainRow.dataset.who = t.initials;
+        mainRow.querySelector(".task-badge").textContent = t.initials;
+        mainRow.querySelector(".task-badge").className = "task-badge";
+        detailCell.innerHTML = t.note ? '<div class="task-note-text">' + t.note + '</div>' : '';
+        detailRow.classList.add("hidden");
+        renderProgress();
+      }
+    });
+  }
+
+  if (thisWeek.length > 0) { addDivider("Due This Week"); thisWeek.forEach(addTaskRow); }
+  if (upcoming.length > 0) { addDivider("Upcoming"); upcoming.forEach(addTaskRow); }
+  if (sorted.length === 0) {
+    var emptyRow = document.createElement("tr");
+    emptyRow.innerHTML = '<td colspan="4" style="padding:16px 8px;color:#bbb;font-size:0.875rem;">No tasks yet.</td>';
+    tbody.appendChild(emptyRow);
+  }
+
+  tbl.appendChild(tbody);
+  card.appendChild(tbl);
+  sec.appendChild(card);
+}
+
+// =============================================================
+// INLINE INITIALS (table context)
+// =============================================================
+function showInlineInitials(task, mainRow, detailRow, detailCell, cb) {
+  document.querySelectorAll(".initials-inline").forEach(function(el) { el.remove(); });
+  detailRow.classList.remove("hidden");
+
+  var noteHTML = task.note ? '<div class="task-note-text">' + task.note + '</div>' : '';
+  detailCell.innerHTML = noteHTML +
+    '<div class="initials-inline">' +
+      '<input type="text" maxlength="2" class="initials-input" autocomplete="off">' +
+      '<button type="button" class="mark-done-btn">Mark as done</button>' +
+      '<button type="button" class="initials-cancel">\u00d7</button>' +
+    '</div>';
+
+  var input   = detailCell.querySelector(".initials-input");
+  var doneBtn = detailCell.querySelector(".mark-done-btn");
+  var cancelBtn = detailCell.querySelector(".initials-cancel");
+  input.focus();
+
+  function confirmDone() {
+    var val = input.value.toUpperCase().trim();
+    if (!val) { input.focus(); input.style.borderColor = "#c0392b"; return; }
+    task.done = true; task.completedBy = val;
+    mainRow.classList.add("done");
+    mainRow.dataset.who = val;
+    mainRow.querySelector(".task-badge").textContent = val;
+    mainRow.querySelector(".task-badge").className = "task-badge done-badge";
+    detailCell.innerHTML = noteHTML + '<span class="task-done-msg">Task done!</span>';
+    setTimeout(function() {
+      detailRow.classList.add("hidden");
+      detailCell.innerHTML = noteHTML;
+    }, 1800);
+    renderProgress();
+    // TODO: POST to Apps Script to sync to sheet
+  }
+
+  function cancelIt() {
+    cb.checked = false;
+    detailCell.innerHTML = noteHTML;
+    if (!noteHTML) detailRow.classList.add("hidden");
+  }
+
+  doneBtn.addEventListener("click", confirmDone);
+  input.addEventListener("keydown", function(e) {
+    if (e.key === "Enter") confirmDone();
+    if (e.key === "Escape") cancelIt();
+  });
+  cancelBtn.addEventListener("click", cancelIt);
+}
+
+// =============================================================
+// PROGRESS
+// =============================================================
+function renderProgress() {
+  var done = ev.tasks.filter(function(t) { return t.done; }).length;
+  var tot  = ev.tasks.length;
+  var pct  = tot > 0 ? Math.round((done / tot) * 100) : 0;
+
+  document.getElementById("headerProgress").innerHTML =
+    '<div class="header-progress-bar"><div class="header-progress-fill" style="width:' + pct + '%"></div></div>' +
+    '<span class="header-progress-text">' + pct + '% &middot; ' + done + ' / ' + tot + ' tasks</span>';
+}
+</script>
+</body>
+</html>

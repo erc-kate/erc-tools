@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Approve Event — ERC Event Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;700&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 15px; background: #f5f5f5; color: #1a1a1a; min-height: 100vh;
+    }
+    .hidden { display: none !important; }
+
+    /* ── Header ─────────────────────────────────────────── */
+    .page-header { background: #500000; color: #fff; padding: 24px 24px 20px; }
+    .page-header-inner { max-width: 640px; margin: 0 auto; }
+    .back-link {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 0.8rem; color: rgba(255,255,255,0.65); text-decoration: none; margin-bottom: 8px;
+    }
+    .back-link:hover { color: #fff; }
+    .page-header h1 { font-family: 'Work Sans', sans-serif; font-size: 1.3rem; font-weight: 700; }
+    .page-header .event-subtitle {
+      font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-top: 4px;
+    }
+
+    /* ── Main ───────────────────────────────────────────── */
+    main { max-width: 640px; margin: 0 auto; padding: 28px 24px 60px; }
+
+    .card {
+      background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;
+      padding: 22px 24px; margin-bottom: 18px;
+    }
+    .card h2 {
+      font-family: 'Work Sans', sans-serif; font-size: 0.85rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.05em; color: #888; margin-bottom: 14px;
+    }
+
+    /* ── Password screen ────────────────────────────────── */
+    #passwordScreen { text-align: center; padding: 40px 24px; }
+    #passwordScreen p { font-size: 0.9rem; color: #666; margin-bottom: 20px; }
+    .pw-input {
+      font-family: inherit; font-size: 1rem; padding: 10px 14px;
+      border: 1.5px solid #ccc; border-radius: 6px; outline: none; width: 200px;
+      text-align: center; letter-spacing: 0.08em; transition: border-color 0.15s;
+    }
+    .pw-input:focus { border-color: #500000; }
+    .pw-error { font-size: 0.8rem; color: #c0392b; margin-top: 8px; min-height: 18px; }
+
+    /* ── Event summary ──────────────────────────────────── */
+    .event-meta-row {
+      display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px;
+    }
+    .meta-chip {
+      font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 3px;
+      background: #f0f0f0; color: #555;
+    }
+    .meta-chip.type { background: #f5e8e8; color: #500000; }
+
+    /* ── Task list ──────────────────────────────────────── */
+    .task-section-header {
+      font-family: 'Work Sans', sans-serif; font-size: 0.72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.07em; color: #aaa;
+      padding: 12px 0 7px; border-bottom: 1px solid #eee; margin-bottom: 2px;
+    }
+    .task-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 4px; border-bottom: 1px solid #f5f5f5;
+    }
+    .task-row:last-child { border-bottom: none; }
+    .task-check { width: 16px; height: 16px; accent-color: #500000; cursor: pointer; flex-shrink: 0; }
+    .task-label {
+      flex: 1; font-size: 0.875rem; color: #1a1a1a; cursor: pointer; line-height: 1.4;
+    }
+    .task-row.unchecked .task-label { color: #bbb; text-decoration: line-through; }
+    .task-note {
+      font-size: 0.75rem; color: #999; margin-top: 2px;
+    }
+    .task-meta { font-size: 0.72rem; color: #bbb; white-space: nowrap; flex-shrink: 0; }
+
+    /* ── Approve button ─────────────────────────────────── */
+    .approve-row {
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    }
+    .approve-btn {
+      font-family: inherit; font-size: 0.95rem; font-weight: 700;
+      background: #500000; color: #fff; border: none; border-radius: 6px;
+      padding: 11px 30px; cursor: pointer; transition: background 0.15s;
+    }
+    .approve-btn:hover:not(:disabled) { background: #3a0000; }
+    .approve-btn:disabled { background: #aaa; cursor: not-allowed; }
+    .approve-msg { font-size: 0.85rem; }
+    .approve-msg.success { color: #1a6b3c; }
+    .approve-msg.error   { color: #8b1a1a; }
+
+    /* ── Loading ────────────────────────────────────────── */
+    .loading-msg { text-align: center; padding: 40px; color: #bbb; font-size: 0.9rem; }
+
+    /* ── Buttons ─────────────────────────────────────────── */
+    .btn-primary {
+      font-family: inherit; font-size: 0.875rem; font-weight: 700;
+      background: #500000; color: #fff; border: none; border-radius: 6px;
+      padding: 9px 22px; cursor: pointer; transition: background 0.15s;
+    }
+    .btn-primary:hover { background: #3a0000; }
+
+    @media (max-width: 480px) {
+      .approve-row { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="page-header-inner">
+    <a href="index.html" class="back-link">&larr; Event Hub</a>
+    <h1>Approve Event</h1>
+    <div class="event-subtitle" id="eventSubtitle"></div>
+  </div>
+</header>
+
+<main>
+
+  <!-- Step 1: Password -->
+  <div class="card" id="passwordScreen">
+    <p>Enter the approval password to review this event.</p>
+    <div>
+      <input type="password" class="pw-input" id="pwInput" placeholder="Password" autocomplete="off">
+    </div>
+    <div class="pw-error" id="pwError"></div>
+    <br>
+    <button class="btn-primary" id="pwBtn">Continue</button>
+  </div>
+
+  <!-- Step 2: Event + Tasks (hidden until password verified) -->
+  <div class="hidden" id="approveContent">
+
+    <!-- Event summary -->
+    <div class="card">
+      <h2>Event Details</h2>
+      <div id="eventSummary"></div>
+    </div>
+
+    <!-- Task checklist -->
+    <div class="card">
+      <h2>Tasks to Generate</h2>
+      <p style="font-size:0.82rem;color:#999;margin-bottom:14px;">
+        All tasks are checked by default. Uncheck any that don't apply for this event.
+      </p>
+      <div id="taskList"></div>
+      <br>
+      <div class="approve-row">
+        <button class="approve-btn" id="approveBtn">Approve &amp; Generate Tasks</button>
+        <span class="approve-msg" id="approveMsg"></span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Loading state -->
+  <div class="loading-msg hidden" id="loadingMsg">Loading event...</div>
+
+</main>
+
+<script>
+var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_T8UyShcR4tTABICN8Z2U47XqC2IVT40h3EPG5-61MIwfOZXb0oHkXyQSZ_tq_V0X/exec";
+var CAT_ORDER = ["Logistics", "Promo", "Food", "Wrap-up"];
+
+var params  = new URLSearchParams(window.location.search);
+var eventId = params.get("id");
+var password = "";
+
+if (!eventId) {
+  document.getElementById("passwordScreen").innerHTML =
+    '<p style="color:#c0392b;">No event ID found in the URL. Check your approval email for the correct link.</p>';
+}
+
+// ── Password ──────────────────────────────────────────────────
+document.getElementById("pwBtn").addEventListener("click", submitPassword);
+document.getElementById("pwInput").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") submitPassword();
+});
+
+function submitPassword() {
+  var pw = document.getElementById("pwInput").value.trim();
+  if (!pw) { setError("Please enter the password."); return; }
+
+  document.getElementById("pwBtn").disabled = true;
+  document.getElementById("pwBtn").textContent = "Checking...";
+
+  post({ action: "verify_password", password: pw })
+    .then(function(res) {
+      if (!res.success) throw new Error(res.error || "Incorrect password.");
+      password = pw;
+      document.getElementById("passwordScreen").classList.add("hidden");
+      loadEvent();
+    })
+    .catch(function(err) {
+      setError(err.message || "Incorrect password.");
+      document.getElementById("pwBtn").disabled = false;
+      document.getElementById("pwBtn").textContent = "Continue";
+    });
+}
+
+function setError(msg) {
+  document.getElementById("pwError").textContent = msg;
+}
+
+// ── Load Event ────────────────────────────────────────────────
+function loadEvent() {
+  document.getElementById("loadingMsg").classList.remove("hidden");
+
+  post({ action: "get_pending", password: password, eventId: eventId })
+    .then(function(res) {
+      if (res.error) throw new Error(res.error);
+      document.getElementById("loadingMsg").classList.add("hidden");
+      renderEvent(res.event);
+      renderTasks(res.tasks);
+      document.getElementById("approveContent").classList.remove("hidden");
+    })
+    .catch(function(err) {
+      document.getElementById("loadingMsg").textContent = "Error: " + err.message;
+    });
+}
+
+// ── Render Event Summary ──────────────────────────────────────
+function renderEvent(ev) {
+  document.getElementById("eventSubtitle").textContent = ev.name;
+  document.title = "Approve: " + ev.name + " — ERC Event Hub";
+
+  var date = ev.date instanceof Date ? ev.date :
+    new Date((ev.date + "").replace(/-/g, "/"));
+  var dateStr = isNaN(date) ? ev.date :
+    date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+
+  var html = '<div class="event-meta-row">' +
+    '<span class="meta-chip type">' + esc(ev.type) + '</span>' +
+    '<span class="meta-chip">' + esc(dateStr) + '</span>' +
+    (ev.time     ? '<span class="meta-chip">' + esc(ev.time)     + '</span>' : '') +
+    (ev.location ? '<span class="meta-chip">' + esc(ev.location) + '</span>' : '') +
+    '</div>';
+
+  document.getElementById("eventSummary").innerHTML = html;
+}
+
+// ── Render Task Checklist ─────────────────────────────────────
+var allTasks = [];
+
+function renderTasks(tasks) {
+  allTasks = tasks;
+  var container = document.getElementById("taskList");
+  container.innerHTML = "";
+
+  // Group by category
+  var groups = {};
+  tasks.forEach(function(t, i) {
+    t._idx = i;
+    t._checked = true;
+    if (!groups[t.category]) groups[t.category] = [];
+    groups[t.category].push(t);
+  });
+
+  var order = CAT_ORDER.concat(
+    Object.keys(groups).filter(function(c) { return CAT_ORDER.indexOf(c) === -1; })
+  );
+
+  order.forEach(function(cat) {
+    if (!groups[cat] || !groups[cat].length) return;
+
+    var hdr = document.createElement("div");
+    hdr.className = "task-section-header";
+    hdr.textContent = cat + " (" + groups[cat].length + ")";
+    container.appendChild(hdr);
+
+    groups[cat].forEach(function(t) {
+      var row = document.createElement("div");
+      row.className = "task-row";
+
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.className = "task-check";
+      cb.checked = true;
+
+      var labelWrap = document.createElement("label");
+      labelWrap.className = "task-label";
+      labelWrap.style.cursor = "pointer";
+      labelWrap.innerHTML = esc(t.task) +
+        (t.note ? '<div class="task-note">' + esc(t.note) + '</div>' : '');
+
+      var meta = document.createElement("span");
+      meta.className = "task-meta";
+      var whoMap = { kate: "KB", clarence: "CM", andy: "AK", ga: "GA", minutes: "TBD" };
+      var initials = whoMap[t.who] || t.who || "";
+      var dueLabel = t.due === 0 ? "Day of" :
+        t.due > 0 ? "E+" + t.due :
+        "E" + t.due;
+      meta.textContent = initials + " · " + dueLabel;
+
+      cb.addEventListener("change", function() {
+        t._checked = this.checked;
+        row.classList.toggle("unchecked", !this.checked);
+      });
+
+      labelWrap.addEventListener("click", function() {
+        cb.checked = !cb.checked;
+        cb.dispatchEvent(new Event("change"));
+      });
+
+      row.appendChild(cb);
+      row.appendChild(labelWrap);
+      row.appendChild(meta);
+      container.appendChild(row);
+    });
+  });
+}
+
+// ── Approve ───────────────────────────────────────────────────
+document.getElementById("approveBtn").addEventListener("click", function() {
+  var btn = document.getElementById("approveBtn");
+  var msg = document.getElementById("approveMsg");
+
+  var approved = allTasks.filter(function(t) { return t._checked; });
+  if (!approved.length) {
+    msg.textContent = "Please keep at least one task checked.";
+    msg.className = "approve-msg error";
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Generating tasks...";
+  msg.textContent = "";
+  msg.className = "approve-msg";
+
+  post({
+    action:        "approve",
+    password:      password,
+    eventId:       eventId,
+    approvedTasks: approved,
+  })
+  .then(function(res) {
+    if (res.error) throw new Error(res.error);
+    msg.textContent = "Tasks generated! Redirecting to event page...";
+    msg.className = "approve-msg success";
+    setTimeout(function() {
+      window.location.href = "event.html?id=" + encodeURIComponent(eventId);
+    }, 1500);
+  })
+  .catch(function(err) {
+    msg.textContent = "Error: " + err.message;
+    msg.className = "approve-msg error";
+    btn.disabled = false;
+    btn.textContent = "Approve & Generate Tasks";
+  });
+});
+
+// ── Helpers ───────────────────────────────────────────────────
+function post(payload) {
+  return fetch(APPS_SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }).then(function(r) { return r.json(); });
+}
+
+function esc(str) {
+  return (str || "").toString()
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+</script>
+</body>
+</html>
