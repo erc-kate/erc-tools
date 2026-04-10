@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Task Dashboard — ERC Event Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+  <style>
+    .page-body { max-width: 960px; }
+
+    /* Filters */
+    .filters {
+      display: flex; gap: 10px; flex-wrap: wrap;
+      margin-bottom: 20px; align-items: center;
+    }
+    .filters select, .filters input {
+      width: auto; padding: 7px 12px; font-size: 13px;
+    }
+    .filters select { min-width: 160px; }
+    .filters input  { min-width: 200px; }
+
+    /* Table */
+    .task-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .task-table th {
+      font-family: 'Work Sans', sans-serif; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em; color: #999;
+      text-align: left; padding: 8px 12px; border-bottom: 2px solid #eee;
+      background: #fff; position: sticky; top: 0; z-index: 1;
+    }
+    .task-table td { padding: 10px 12px; border-bottom: 1px solid #f2f2f2; color: #444; vertical-align: top; }
+    .task-table tr:hover td { background: #fafafa; }
+    .task-table tr.done td { opacity: 0.45; text-decoration: line-through; }
+
+    .event-name { font-weight: 600; color: #333; }
+    .task-name  { color: #444; }
+    .due-date   { white-space: nowrap; }
+    .due-date.overdue  { color: #c0392b; font-weight: 600; }
+    .due-date.upcoming { color: #b05000; }
+
+    /* Status badge */
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 20px;
+      font-size: 11px; font-weight: 600; white-space: nowrap;
+    }
+    .badge-not-started { background: #f0f0f0; color: #888; }
+    .badge-pending     { background: #fff3e0; color: #b05000; }
+    .badge-complete    { background: #edfaf1; color: #1a6b3c; }
+
+    /* Person chip */
+    .chip {
+      display: inline-block; padding: 1px 7px; border-radius: 20px;
+      font-size: 11px; font-weight: 700; background: #eee; color: #555;
+    }
+    .chip-KB { background: #e8eaf6; color: #3949ab; }
+    .chip-CM { background: #fce4ec; color: #c2185b; }
+    .chip-AK { background: #e8f5e9; color: #388e3c; }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: #bbb; font-size: 14px; }
+
+    /* Loading */
+    .loading { text-align: center; padding: 40px; color: #bbb; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+<div class="page-header">
+  <div style="flex:1;">
+    <a href="../">← ERC Tools</a>
+    <h1>ERC Event Hub</h1>
+  </div>
+  <a href="index.html" class="btn-primary" style="text-decoration:none; padding:8px 14px; font-size:13px;">+ Submit event</a>
+</div>
+
+<div class="page-body">
+  <div class="card" style="padding: 24px 28px;">
+
+    <div class="filters">
+      <input type="text" id="searchInput" placeholder="Search tasks or events…">
+      <select id="filterPerson">
+        <option value="">All people</option>
+        <option value="KB">Kate (KB)</option>
+        <option value="CM">Clarence (CM)</option>
+        <option value="AK">Andy (AK)</option>
+      </select>
+      <select id="filterStatus">
+        <option value="">All statuses</option>
+        <option value="Not started">Not started</option>
+        <option value="Pending">Pending</option>
+        <option value="Complete">Complete</option>
+      </select>
+      <select id="filterEvent">
+        <option value="">All events</option>
+      </select>
+    </div>
+
+    <div id="loadingState" class="loading">Loading tasks…</div>
+
+    <div id="tableWrapper" class="hidden">
+      <table class="task-table">
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Task</th>
+            <th>Category</th>
+            <th>Who</th>
+            <th>Due</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="taskBody"></tbody>
+      </table>
+      <div id="emptyState" class="empty-state hidden">No tasks match your filters.</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSEojOkNOJGtAbqgazW96HJZEoeE7UzIzUcFVzSeryYVk8Dnyt-Xv-43AIhM_A9OsPXWdZfleYcohhn/pub?output=csv";
+
+  let allTasks = [];
+
+  // ── Load CSV ─────────────────────────────────────────────
+  fetch(CSV_URL)
+    .then(function (r) { return r.text(); })
+    .then(function (csv) {
+      allTasks = parseCSV(csv);
+      populateEventFilter();
+      render();
+      document.getElementById("loadingState").classList.add("hidden");
+      document.getElementById("tableWrapper").classList.remove("hidden");
+    })
+    .catch(function () {
+      document.getElementById("loadingState").textContent = "Could not load tasks. Make sure the sheet is published.";
+    });
+
+  // ── CSV parser ───────────────────────────────────────────
+  function parseCSV(text) {
+    const lines  = text.trim().split("\n");
+    const header = splitCSVLine(lines[0]);
+    return lines.slice(1).map(function (line) {
+      const vals = splitCSVLine(line);
+      const obj  = {};
+      header.forEach(function (h, i) { obj[h.trim()] = (vals[i] || "").trim(); });
+      return obj;
+    }).filter(function (r) { return r["Task"]; });
+  }
+
+  function splitCSVLine(line) {
+    const result = [];
+    let cur = "", inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"' && !inQ) { inQ = true; }
+      else if (c === '"' && inQ && line[i+1] === '"') { cur += '"'; i++; }
+      else if (c === '"' && inQ) { inQ = false; }
+      else if (c === ',' && !inQ) { result.push(cur); cur = ""; }
+      else { cur += c; }
+    }
+    result.push(cur);
+    return result;
+  }
+
+  // ── Populate event filter ────────────────────────────────
+  function populateEventFilter() {
+    const events = [...new Set(allTasks.map(function (t) { return t["Event"]; }))].sort();
+    const sel    = document.getElementById("filterEvent");
+    events.forEach(function (e) {
+      const opt = document.createElement("option");
+      opt.value = opt.textContent = e;
+      sel.appendChild(opt);
+    });
+  }
+
+  // ── Render ───────────────────────────────────────────────
+  function render() {
+    const search  = document.getElementById("searchInput").value.toLowerCase();
+    const person  = document.getElementById("filterPerson").value;
+    const status  = document.getElementById("filterStatus").value;
+    const event   = document.getElementById("filterEvent").value;
+    const today   = new Date(); today.setHours(0,0,0,0);
+
+    const filtered = allTasks.filter(function (t) {
+      if (search && !t["Task"].toLowerCase().includes(search) && !t["Event"].toLowerCase().includes(search)) return false;
+      if (person && t["Initials"] !== person) return false;
+      if (status && t["Status"]   !== status)  return false;
+      if (event  && t["Event"]    !== event)   return false;
+      return true;
+    });
+
+    const tbody = document.getElementById("taskBody");
+    tbody.innerHTML = "";
+
+    filtered.forEach(function (t) {
+      const tr     = document.createElement("tr");
+      const done   = t["Done"] === "TRUE";
+      if (done) tr.classList.add("done");
+
+      const dueDate = parseDate(t["Due Date"]);
+      const dueCls  = !done && dueDate
+        ? (dueDate < today ? "overdue" : dueDate - today < 7*86400000 ? "upcoming" : "")
+        : "";
+
+      tr.innerHTML =
+        '<td class="event-name">' + esc(t["Event"]) + '</td>' +
+        '<td class="task-name">'  + esc(t["Task"])  + '</td>' +
+        '<td>'                    + esc(t["Category"]) + '</td>' +
+        '<td><span class="chip chip-' + esc(t["Initials"]) + '">' + esc(t["Initials"]) + '</span></td>' +
+        '<td class="due-date ' + dueCls + '">' + formatDate(dueDate) + '</td>' +
+        '<td>' + badgeHtml(t["Status"]) + '</td>';
+
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById("emptyState").classList.toggle("hidden", filtered.length > 0);
+  }
+
+  // ── Filters ──────────────────────────────────────────────
+  ["searchInput","filterPerson","filterStatus","filterEvent"].forEach(function (id) {
+    document.getElementById(id).addEventListener("input", render);
+  });
+
+  // ── Helpers ──────────────────────────────────────────────
+  function parseDate(str) {
+    if (!str) return null;
+    const d = new Date(str);
+    return isNaN(d) ? null : d;
+  }
+
+  function formatDate(d) {
+    if (!d) return "—";
+    return (d.getMonth()+1) + "/" + d.getDate() + "/" + d.getFullYear();
+  }
+
+  function badgeHtml(status) {
+    const cls = status === "Complete" ? "badge-complete" : status === "Pending" ? "badge-pending" : "badge-not-started";
+    return '<span class="badge ' + cls + '">' + esc(status) + '</span>';
+  }
+
+  function esc(str) {
+    return (str || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>ERC Newsletter Scraping — Roberto's Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --maroon: #2d4a6e;
+  --maroon-mid: #3d6088;
+  --maroon-light: #eef3f9;
+  --maroon-pale: #f4f7fb;
+  --gray-bg: #eaeaea;
+  --gray-border: #e0e0e0;
+  --text: #1a1a1a;
+  --text-muted: #666;
+  --link: #2d6fa8;
+  --code-bg: #f4f4f4;
+  --sidebar-w: 220px;
+  --header-h: 54px;
+}
+
+html, body { height: 100%; font-family: 'Open Sans', sans-serif; background: var(--gray-bg); color: var(--text); font-size: 15px; }
+
+/* ── HEADER ── */
+.site-header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  height: var(--header-h);
+  background: var(--maroon);
+  display: flex; align-items: center; padding: 0 20px; gap: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+}
+.hdr-badge {
+  font-family: 'Work Sans', sans-serif; font-weight: 700; font-size: .72rem;
+  letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.45);
+  white-space: nowrap;
+}
+.hdr-div { width: 1px; height: 22px; background: rgba(255,255,255,.2); flex-shrink: 0; }
+.hdr-title {
+  font-family: 'Work Sans', sans-serif; font-weight: 700; font-size: .98rem;
+  color: #fff; flex: 1;
+}
+.hdr-pill {
+  background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.2);
+  color: rgba(255,255,255,.8); font-family: 'Work Sans', sans-serif;
+  font-size: .68rem; font-weight: 600; letter-spacing: .05em;
+  padding: 3px 10px; border-radius: 20px; white-space: nowrap;
+}
+
+/* ── LAYOUT ── */
+.layout {
+  display: flex;
+  position: fixed; top: var(--header-h); bottom: 0; left: 0; right: 0;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w); flex-shrink: 0;
+  background: #fff; border-right: 1px solid var(--gray-border);
+  overflow-y: auto; padding: 16px 0 24px;
+}
+.nav-section-label {
+  font-family: 'Work Sans', sans-serif; font-size: .6rem; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; color: #bbb;
+  padding: 12px 16px 4px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 16px; cursor: pointer;
+  border-left: 3px solid transparent;
+  text-decoration: none; color: var(--text-muted);
+  font-family: 'Work Sans', sans-serif; font-size: .82rem; font-weight: 500;
+  transition: background .1s, color .1s, border-color .1s;
+}
+.nav-item:hover { background: var(--maroon-pale); color: var(--maroon); }
+.nav-item.active { background: var(--maroon-light); border-left-color: var(--maroon); color: var(--maroon); font-weight: 600; }
+.nav-icon { display: none; }
+
+/* ── MAIN ── */
+.main {
+  flex: 1; overflow-y: auto; padding: 32px 40px 60px;
+}
+
+/* ── SECTIONS ── */
+.section { max-width: 820px; margin-bottom: 56px; scroll-margin-top: 24px; }
+
+.section-title {
+  font-family: 'Work Sans', sans-serif; font-size: 1.45rem; font-weight: 700;
+  color: var(--maroon); margin-bottom: 6px;
+  display: flex; align-items: center; gap: 10px;
+}
+.section-title .s-icon { display: none; }
+.section-divider {
+  height: 3px; background: linear-gradient(90deg, var(--maroon) 0%, transparent 100%);
+  border-radius: 2px; margin-bottom: 20px;
+}
+
+h3 {
+  font-family: 'Work Sans', sans-serif; font-size: 1rem; font-weight: 700;
+  color: #333; margin: 24px 0 10px;
+}
+h4 {
+  font-family: 'Work Sans', sans-serif; font-size: .9rem; font-weight: 700;
+  color: var(--maroon); margin: 18px 0 6px;
+}
+
+p { line-height: 1.65; margin-bottom: 10px; color: #333; }
+
+ul { padding-left: 22px; margin-bottom: 12px; }
+ul li { line-height: 1.6; margin-bottom: 5px; color: #333; }
+
+a { color: var(--link); }
+a:hover { text-decoration: underline; }
+
+/* ── TABLE ── */
+table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: .88rem; }
+thead tr { background: var(--maroon); color: #fff; }
+thead th { padding: 9px 12px; text-align: left; font-family: 'Work Sans', sans-serif; font-weight: 600; font-size: .82rem; }
+tbody tr:nth-child(even) { background: var(--maroon-pale); }
+tbody tr:hover { background: var(--maroon-light); }
+tbody td { padding: 8px 12px; border-bottom: 1px solid var(--gray-border); vertical-align: top; }
+.badge {
+  display: inline-block; padding: 2px 8px; border-radius: 12px;
+  font-size: .72rem; font-weight: 700; font-family: 'Work Sans', sans-serif;
+}
+.badge-yes { background: #e6f4ea; color: #2d7a3a; }
+.badge-no  { background: #f4e6e6; color: #a33; }
+.badge-part{ background: #fff7e0; color: #8a6500; }
+
+/* ── CODE / PROMPT BLOCKS ── */
+.prompt-block {
+  background: #f8f8f8;
+  border-left: 4px solid var(--maroon);
+  border-radius: 0 6px 6px 0;
+  padding: 16px 20px;
+  margin: 12px 0 20px;
+  font-family: 'Courier New', monospace;
+  font-size: .82rem;
+  line-height: 1.7;
+  color: #222;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.prompt-label {
+  font-family: 'Work Sans', sans-serif; font-weight: 700; font-size: .75rem;
+  letter-spacing: .07em; text-transform: uppercase;
+  color: var(--maroon); margin-bottom: 6px;
+}
+
+/* ── CALLOUT ── */
+.callout {
+  background: var(--maroon-light); border: 1px solid #f0cccc;
+  border-radius: 8px; padding: 14px 18px; margin: 14px 0;
+  font-size: .88rem; line-height: 1.6;
+}
+.callout strong { color: var(--maroon); }
+
+.tip {
+  background: #f0f4ff; border: 1px solid #c8d4f0;
+  border-radius: 8px; padding: 14px 18px; margin: 14px 0;
+  font-size: .88rem; line-height: 1.6;
+}
+.tip strong { color: #3a4fa0; }
+
+.warning {
+  background: #fffbea; border: 1px solid #f0d060;
+  border-radius: 8px; padding: 14px 18px; margin: 14px 0;
+  font-size: .88rem; line-height: 1.6;
+}
+
+/* ── FILE LIST ── */
+.file-list { list-style: none; padding: 0; margin: 12px 0; }
+.file-list li {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 14px; border-radius: 8px; margin-bottom: 6px;
+  background: #fff; border: 1px solid var(--gray-border);
+  font-size: .88rem; line-height: 1.5;
+}
+.file-list li .fi { display: none; }
+.file-list li strong { font-family: 'Work Sans', sans-serif; display: block; color: var(--maroon); }
+
+/* ── STEP GRID ── */
+.steps { counter-reset: step; }
+.step {
+  display: flex; gap: 16px; margin-bottom: 18px;
+  align-items: flex-start;
+}
+.step-num {
+  counter-increment: step;
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--maroon); color: #fff;
+  font-family: 'Work Sans', sans-serif; font-weight: 700; font-size: .85rem;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 2px;
+}
+.step-body p { margin-bottom: 4px; }
+
+/* ── WORKFLOW TABLE ── */
+.workflow-table td:first-child { font-family: 'Work Sans', sans-serif; font-weight: 600; color: var(--maroon); white-space: nowrap; }
+
+/* ── MOBILE ── */
+@media (max-width: 700px) {
+  .layout { flex-direction: column; position: static; padding-top: var(--header-h); min-height: 100vh; }
+  .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--gray-border); overflow-y: visible; }
+  .main { padding: 20px 16px 40px; }
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <span class="hdr-badge">ERC Newsletter</span>
+  <div class="hdr-div"></div>
+  <span class="hdr-title">Scraping Workflow Hub</span>
+</header>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar">
+    <div class="nav-section-label">Getting Started</div>
+    <a class="nav-item active" href="#folder" onclick="setActive(this)">
+      <span class="nav-icon"></span> What's in This Folder
+    </a>
+    <a class="nav-item" href="#newsletter" onclick="setActive(this)">
+      <span class="nav-icon"></span> Newsletter Structure
+    </a>
+
+    <div class="nav-section-label">Claude Setup</div>
+    <a class="nav-item" href="#setup" onclick="setActive(this)">
+      <span class="nav-icon"></span> Setting Up Claude
+    </a>
+    <a class="nav-item" href="#prompts" onclick="setActive(this)">
+      <span class="nav-icon"></span> Starter Prompts
+    </a>
+    <a class="nav-item" href="#tips" onclick="setActive(this)">
+      <span class="nav-icon"></span> Claude Tips
+    </a>
+    <a class="nav-item" href="#firecrawl" onclick="setActive(this)">
+      <span class="nav-icon"></span> Firecrawl (Optional)
+    </a>
+    <a class="nav-item" href="#claudecode" onclick="setActive(this)">
+      <span class="nav-icon"></span> Claude Code (Level Up)
+    </a>
+
+    <div class="nav-section-label">Sources</div>
+    <a class="nav-item" href="#sources-events" onclick="setActive(this)">
+      <span class="nav-icon"></span> Events Sources
+    </a>
+    <a class="nav-item" href="#sources-jobs" onclick="setActive(this)">
+      <span class="nav-icon"></span> Job Boards
+    </a>
+    <a class="nav-item" href="#sources-foundations" onclick="setActive(this)">
+      <span class="nav-icon"></span> Foundations
+    </a>
+
+    <div class="nav-section-label">Running It</div>
+    <a class="nav-item" href="#workflow" onclick="setActive(this)">
+      <span class="nav-icon"></span> Bi-Weekly Workflow
+    </a>
+    <a class="nav-item" href="#tracking" onclick="setActive(this)">
+      <span class="nav-icon"></span> Tracking & Changelog
+    </a>
+    <a class="nav-item" href="#handoff" onclick="setActive(this)">
+      <span class="nav-icon"></span> Handoff to Kate
+    </a>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main" id="main">
+
+    <!-- ── WHAT'S IN THIS FOLDER ── -->
+    <section class="section" id="folder">
+      <div class="section-title"><span class="s-icon">📁</span> What's in This Folder</div>
+      <div class="section-divider"></div>
+      <p>Everything you need to build a Claude-based content scraping workflow for the ERC Newsletter. Here's what Kate has included:</p>
+      <ul class="file-list">
+        <li><span class="fi">🌐</span><div><strong>index.html (this page)</strong>Full reference hub — all instructions, prompts, and source lists in one place. Open in any browser.</div></li>
+        <li><span class="fi">📄</span><div><strong>Claude_Project_Instructions.txt</strong>Ready-to-use system prompt. Copy and paste this directly into your Claude Project instructions.</div></li>
+        <li><span class="fi">📄</span><div><strong>Starter_Prompts.txt</strong>All 4 scraping prompts + a gut-check prompt. Copy and paste into Claude each newsletter cycle.</div></li>
+        <li><span class="fi">📊</span><div><strong>Ed Policy Org List (Google Sheet — link from Kate)</strong>The master source list: ~270+ orgs organized into tabs by type. This is what you'll use to know which websites to check.</div></li>
+        <li><span class="fi">📁</span><div><strong>Past Newsletters/</strong>Recent ERC newsletters in HTML format. Upload 2–3 of these to your Claude Project so Claude knows the format and tone.</div></li>
+      </ul>
+      <div class="callout">
+        <strong>First newsletter deadline:</strong> The next newsletter goes out <strong>Tuesday, April 15</strong>. Don't stress about having everything perfect — just try running a few prompts this week and see what you get. Drop whatever you find in the Google Sheet by Monday the 14th and Kate will take it from there.
+      </div>
+    </section>
+
+    <!-- ── NEWSLETTER STRUCTURE ── -->
+    <section class="section" id="newsletter">
+      <div class="section-title"><span class="s-icon">📰</span> Newsletter Structure</div>
+      <div class="section-divider"></div>
+      <p>The ERC Newsletter goes out every other Tuesday. Here's what's in it and which parts you're responsible for scraping:</p>
+      <table>
+        <thead><tr><th>Section</th><th>What It Is</th><th>Roberto?</th></tr></thead>
+        <tbody>
+          <tr><td><strong>ERC Spotlight</strong></td><td>Internal ERC programs, team spotlights, announcements</td><td><span class="badge badge-no">Kate handles</span></td></tr>
+          <tr><td><strong>Texas A&M Events</strong></td><td>Local TAMU seminars, IPEG talks, CEHD events</td><td><span class="badge badge-part">Check CEHD calendar</span></td></tr>
+          <tr><td><strong>Beyond Texas A&M Events</strong></td><td>External webinars, conferences, org events</td><td><span class="badge badge-yes">Yes</span></td></tr>
+          <tr><td><strong>Funding & Grants</strong></td><td>Open grants, fellowships with active deadlines</td><td><span class="badge badge-yes">Yes</span></td></tr>
+          <tr><td><strong>Calls for Proposals</strong></td><td>Open CFPs for conferences, journals, edited volumes</td><td><span class="badge badge-yes">Yes</span></td></tr>
+          <tr><td><strong>Job Postings</strong></td><td>Faculty, postdoc, research positions</td><td><span class="badge badge-yes">Yes</span></td></tr>
+        </tbody>
+      </table>
+      <h3>What Each Item Looks Like</h3>
+      <p>Every item in the newsletter follows the same format. This is what you're trying to capture for each one:</p>
+      <ul>
+        <li><strong>Title</strong> (linked to the source)</li>
+        <li><strong>Institution / Host Organization</strong></li>
+        <li><strong>Key Details:</strong> deadline or date + link</li>
+        <li><strong>Brief description</strong> — 1–2 sentences max</li>
+      </ul>
+    </section>
+
+    <!-- ── SETTING UP CLAUDE ── -->
+    <section class="section" id="setup">
+      <div class="section-title"><span class="s-icon">⚙️</span> Setting Up Your Claude Project</div>
+      <div class="section-divider"></div>
+      <p>Claude Projects let you give Claude persistent instructions and upload files it references every session. Set this up once and it carries forward automatically.</p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <p><strong>Create the project</strong></p>
+            <p>Go to <a href="https://claude.ai" target="_blank">claude.ai</a> → click <strong>Projects</strong> in the left sidebar → <strong>New Project</strong>. Name it: <em>ERC Newsletter Scraping</em></p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <p><strong>Add the system prompt</strong></p>
+            <p>Click <strong>Add Instructions</strong>. Open <code>Claude_Project_Instructions.txt</code> from this folder and paste the whole thing in. That's your starting point — you'll refine it over time.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <p><strong>Upload knowledge files</strong></p>
+            <p>Click <strong>Add to Project</strong> and upload:</p>
+            <ul>
+              <li>2–3 recent newsletters from the <code>Past Newsletters/</code> folder — so Claude knows the format</li>
+              <li>The Ed Policy Org List (download as CSV from the Google Sheet Kate shared)</li>
+            </ul>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <p><strong>Always work inside the project</strong></p>
+            <p>Every scraping session should happen inside this project. Claude will remember your instructions and uploaded files automatically. Don't start new conversations outside the project.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── STARTER PROMPTS ── -->
+    <section class="section" id="prompts">
+      <div class="section-title"><span class="s-icon">🚀</span> Starter Prompts</div>
+      <div class="section-divider"></div>
+      <p>These are also in <code>Starter_Prompts.txt</code> for easy copy-paste. <strong>Always fill in today's date and the specific URL before running.</strong> Run one content type per session — not all at once.</p>
+
+      <div class="tip">
+        <strong>Tool options:</strong> You have two ways to feed content to Claude. (1) Use the <strong>Claude Chrome extension</strong> — browse to the page and click the extension to capture it. (2) If the extension doesn't capture it right, <strong>copy-paste</strong> the page text manually, or use <strong>Firecrawl</strong> (see that section). Start with the extension and fall back as needed.
+      </div>
+
+      <h4>Prompt 1 — Job Postings</h4>
+      <div class="prompt-label">Copy · Paste · Fill in [DATE] and [URL]</div>
+      <div class="prompt-block">Today's date is [DATE].
+
+Go to this page: [PASTE DIRECT URL TO JOBS/CAREERS PAGE]
+
+Find all current job postings relevant to education policy researchers
+(faculty, postdoc, research associate, policy analyst roles).
+
+RULES:
+- Only include postings that appear to still be open as of today
+- If an application deadline has already passed, exclude it
+- If a posting has no date or deadline, include it but mark it ⚠️
+
+Return a table with these columns:
+| Job Title | Institution | Department | Deadline | Link |</div>
+
+      <h4>Prompt 2 — Upcoming Events & Webinars</h4>
+      <div class="prompt-label">Copy · Paste · Fill in [DATE] and [URL]</div>
+      <div class="prompt-block">Today's date is [DATE].
+
+Go to this page: [PASTE DIRECT URL TO EVENTS PAGE]
+
+Find all upcoming events, webinars, and conferences that have NOT
+yet occurred as of today. Exclude anything already past.
+
+Return a table with these columns:
+| Event Title | Date & Time | Host Org | Virtual or In-Person | Link | Description (1 sentence) |</div>
+
+      <h4>Prompt 3 — Grants & Funding Opportunities</h4>
+      <div class="prompt-label">Copy · Paste · Fill in [DATE] and [URL]</div>
+      <div class="prompt-block">Today's date is [DATE].
+
+Go to this page: [PASTE DIRECT URL TO GRANTS/FUNDING PAGE]
+
+Find open grant opportunities and fellowships relevant to education
+policy researchers. Only include opportunities whose deadlines have
+NOT yet passed. If there is no deadline listed, include it but mark ⚠️.
+
+Return a table with these columns:
+| Grant / Fellowship Name | Funder | Amount (if listed) | Deadline | Link | Description (1 sentence) |</div>
+
+      <h4>Prompt 4 — Calls for Proposals / Papers / Chapters</h4>
+      <div class="prompt-label">Copy · Paste · Fill in [DATE] and [URL]</div>
+      <div class="prompt-block">Today's date is [DATE].
+
+Go to this page: [PASTE URL]
+
+Find any open calls for papers, proposals, chapters, or session
+submissions. Only include those with submission deadlines that
+have NOT yet passed.
+
+Return a table with these columns:
+| Title | Type (paper/session/chapter) | Organization | Submission Deadline | Link |</div>
+
+      <h4>Gut-Check Prompt — Run After Any Session</h4>
+      <div class="prompt-label">Run this after each scraping session</div>
+      <div class="prompt-block">Today is [DATE]. Please review everything you just returned.
+Are you confident all items are currently active or upcoming as of today?
+Flag anything you're uncertain about with ⚠️ and explain why.</div>
+    </section>
+
+    <!-- ── CLAUDE TIPS ── -->
+    <section class="section" id="tips">
+      <div class="section-title"><span class="s-icon">💡</span> Claude Tips</div>
+      <div class="section-divider"></div>
+
+      <h3>The Basics</h3>
+      <ul>
+        <li><strong>Always inject today's date.</strong> This is the single biggest fix for outdated content. Every prompt, every time.</li>
+        <li><strong>Paste the direct URL</strong> to the specific page (events page, careers page) — not the homepage. Claude reads exactly what you give it.</li>
+        <li><strong>One content type per prompt.</strong> Don't ask Claude to find jobs AND events AND grants all at once. Focused tasks get better results.</li>
+        <li><strong>Ask for table format.</strong> Tables are easy to review and paste straight into the Google Sheet.</li>
+      </ul>
+
+      <h3>The Chrome Extension</h3>
+      <p>The Claude Chrome extension captures the current page and sends it to Claude. It works great for most sites, but can be inconsistent on:</p>
+      <ul>
+        <li><strong>Side-panel sites</strong> (like AERA's job board) — listings load in a popup sidebar when you click them. The extension only captures the main list view, not the panel content.</li>
+        <li><strong>JavaScript-heavy pages</strong> — content that loads dynamically after the page opens.</li>
+      </ul>
+      <p><strong>Workaround order of operations:</strong></p>
+      <ul>
+        <li>① Try the Chrome extension first</li>
+        <li>② If it misses content — scroll through the full page to load everything, then try again</li>
+        <li>③ If still incomplete — manually copy-paste the page text into Claude</li>
+        <li>④ If the site consistently fails — try Firecrawl (see next section) or log it in the Problem Sites tab</li>
+      </ul>
+
+      <h3>Getting Better Results Over Time</h3>
+      <ul>
+        <li>When Claude returns something wrong, <strong>correct it in the same chat</strong>: <em>"This posting is from 2024, it's expired — exclude anything without a clear current deadline."</em> It adjusts immediately.</li>
+        <li>If a prompt works really well on a specific site, <strong>note it in your changelog</strong> so you remember to reuse it.</li>
+        <li>Don't try to scrape all 270+ orgs at once. <strong>Batch by tab</strong> — run foundations one session, think tanks another, job boards another.</li>
+      </ul>
+    </section>
+
+    <!-- ── FIRECRAWL ── -->
+    <section class="section" id="firecrawl">
+      <div class="section-title"><span class="s-icon">🔥</span> Firecrawl (Optional Level-Up)</div>
+      <div class="section-divider"></div>
+      <p>If the Chrome extension or copy-paste approach isn't working on a particular site, Firecrawl is your next option. It's not required — but it directly solves the most common failure mode.</p>
+
+      <h3>What Is It?</h3>
+      <p>Firecrawl (<a href="https://firecrawl.dev" target="_blank">firecrawl.dev</a>) fetches a webpage and converts it into clean text that AI can actually read — including sites that use JavaScript to load content dynamically. Free to use.</p>
+
+      <h3>How to Use It (3 Steps)</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body"><p>Go to <a href="https://firecrawl.dev" target="_blank">firecrawl.dev</a> and paste the URL of the page you want to scrape.</p></div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body"><p>Firecrawl returns the clean text content of that page.</p></div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body"><p>Paste that content into Claude with your usual prompt:<br><em>"Today is [DATE]. Here is the content from [org]'s events page. Find all upcoming events..."</em></p></div>
+        </div>
+      </div>
+
+      <div class="tip">
+        <strong>Start without it.</strong> Get the basic workflow running first. Pull in Firecrawl only for the sites that consistently give Claude trouble. You don't need it for everything — just the problem pages.
+      </div>
+
+      <h3>Want to Go Deeper?</h3>
+      <p>Firecrawl also has an API that can automatically crawl entire websites. That's optional advanced territory — the free copy-paste version is all you need to get started. If you're curious about the API, let Kate know and you can explore it together.</p>
+    </section>
+
+    <!-- ── EVENTS SOURCES ── -->
+    <section class="section" id="sources-events">
+      <div class="section-title"><span class="s-icon">📅</span> Events Sources</div>
+      <div class="section-divider"></div>
+      <p>Check these sites each cycle for upcoming events, webinars, and conferences. Go directly to their <strong>Events</strong> or <strong>News</strong> pages — not the homepage.</p>
+      <table>
+        <thead><tr><th>Organization</th><th>What to Look For</th></tr></thead>
+        <tbody>
+          <tr><td><a href="https://aefpweb.org" target="_blank">AEFP</a></td><td>Webinar series, annual conference CFP, workshops</td></tr>
+          <tr><td><a href="https://sree.org" target="_blank">SREE</a></td><td>Conferences, virtual events</td></tr>
+          <tr><td><a href="https://appam.org" target="_blank">APPAM</a></td><td>Fall research conference, webinars</td></tr>
+          <tr><td><a href="https://nnerpp.rice.edu" target="_blank">NNERPP</a></td><td>Annual Forum (July 2026, LA), virtual events</td></tr>
+          <tr><td><a href="https://annenberg.brown.edu" target="_blank">Annenberg Institute at Brown</a></td><td>Half-Baked Seminar Series, SustainableED conference</td></tr>
+          <tr><td><a href="https://caldercenter.org" target="_blank">CALDER Center</a></td><td>Annual conference, research seminars</td></tr>
+          <tr><td><a href="https://learningpolicyinstitute.org" target="_blank">Learning Policy Institute</a></td><td>Webinars, events, policy briefings</td></tr>
+          <tr><td><a href="https://hunt-institute.org" target="_blank">Hunt Institute</a></td><td>Policy briefings, webinars</td></tr>
+          <tr><td><a href="https://future-ed.org" target="_blank">Future Ed</a></td><td>Events, forums</td></tr>
+          <tr><td><a href="https://nasbe.org" target="_blank">NASBE</a></td><td>Board meetings, webinars</td></tr>
+          <tr><td><a href="https://urban.org" target="_blank">Urban Institute</a></td><td>Education events, briefings</td></tr>
+          <tr><td><a href="https://brookings.edu" target="_blank">Brookings Institution</a></td><td>Education policy events</td></tr>
+          <tr><td><a href="https://cehd.tamu.edu" target="_blank">CEHD · Texas A&M</a></td><td>Local talks, seminars, IPEG series</td></tr>
+          <tr><td><a href="https://nrea.net" target="_blank">NREA</a></td><td>National Forum Oct 2026 in San Antonio — don't miss this one!</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ── JOB BOARDS ── -->
+    <section class="section" id="sources-jobs">
+      <div class="section-title"><span class="s-icon">💼</span> Job Boards</div>
+      <div class="section-divider"></div>
+      <p>These are the dedicated job posting sites to check each cycle. Go directly to the jobs/careers page — not the homepage. The full org list in the Google Sheet has additional career pages to check.</p>
+      <div class="warning">
+        <strong>Note: AERA's job board</strong> loads listings in a side panel when you click them — the Chrome extension may only capture the main list, not the full details. Use copy-paste or Firecrawl for this one. Same issue may come up on Workday-based sites (Urban, RAND, Brookings).
+      </div>
+      <table>
+        <thead><tr><th>Board</th><th>Direct Link</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td><strong>AERA</strong></td><td><a href="https://careers.aera.net/jobseeker/search/results/?sort=start" target="_blank">careers.aera.net/jobseeker/search</a></td><td>Faculty, research, admin — side panel issue ⚠️</td></tr>
+          <tr><td><strong>AEFP</strong></td><td><a href="https://aefpweb.org/jobs_search.asp?proc=y" target="_blank">aefpweb.org/jobs_search.asp</a></td><td>Ed finance & policy positions</td></tr>
+          <tr><td><strong>APPAM</strong></td><td><a href="https://appam.mcjobboard.net/jobs" target="_blank">appam.mcjobboard.net/jobs</a></td><td>Public policy & ed policy positions</td></tr>
+          <tr><td><strong>SREE</strong></td><td><a href="https://sree.mcjobboard.net/jobs" target="_blank">sree.mcjobboard.net/jobs</a></td><td>Research & evaluation positions</td></tr>
+          <tr><td><strong>PIE Network</strong></td><td><a href="https://www.pie-network.org/meet-our-members/network-job-board/" target="_blank">pie-network.org/network-job-board</a></td><td>Policy + advocacy roles</td></tr>
+          <tr><td><strong>NNERPP</strong></td><td><a href="https://nnerpp.rice.edu/" target="_blank">nnerpp.rice.edu</a></td><td>RPP & research-practice positions</td></tr>
+          <tr><td><strong>Urban Institute</strong></td><td><a href="https://urban.wd1.myworkdayjobs.com/Urban-Careers" target="_blank">urban.wd1.myworkdayjobs.com</a></td><td>Research roles — Workday site, may need copy-paste ⚠️</td></tr>
+          <tr><td><strong>Brookings</strong></td><td><a href="https://careers-brookings.icims.com/jobs/search?ss=1&hashed=-435682078&mobile=false&width=890&height=500&bga=true&needsRedirect=false&jan1offset=-360&jun1offset=-300" target="_blank">careers-brookings.icims.com</a></td><td>Policy research positions — iCIMS site ⚠️</td></tr>
+          <tr><td><strong>RAND</strong></td><td><a href="https://rand.wd5.myworkdayjobs.com/External_Career_Site/" target="_blank">rand.wd5.myworkdayjobs.com</a></td><td>Research analyst/associate — Workday site ⚠️</td></tr>
+          <tr><td><strong>Learning Policy Institute</strong></td><td><a href="https://learningpolicyinstitute.org/about/careers" target="_blank">learningpolicyinstitute.org/about/careers</a></td><td>Research & policy roles</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ── FOUNDATIONS ── -->
+    <section class="section" id="sources-foundations">
+      <div class="section-title"><span class="s-icon">🏛️</span> Foundations & Grant Sources</div>
+      <div class="section-divider"></div>
+      <p>Check the <strong>grants</strong> or <strong>funding</strong> pages on these sites — not the homepage. Only include opportunities with deadlines that haven't passed. Flag anything undated with ⚠️.</p>
+
+      <h3>Texas-Based Foundations</h3>
+      <table>
+        <thead><tr><th>Foundation</th><th>Website</th><th>Focus</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Holdsworth Center</strong></td><td><a href="https://holdsworthcenter.org" target="_blank">holdsworthcenter.org</a></td><td>School leadership, TX public schools</td></tr>
+          <tr><td><strong>Meadows Foundation</strong></td><td><a href="https://meadowsfoundation.org" target="_blank">meadowsfoundation.org</a></td><td>Broad TX education & community</td></tr>
+          <tr><td><strong>Houston Endowment</strong></td><td><a href="https://houstonendowment.org" target="_blank">houstonendowment.org</a></td><td>Greater Houston K–12</td></tr>
+          <tr><td><strong>Sid W. Richardson Foundation</strong></td><td><a href="https://sidrichardson.org" target="_blank">sidrichardson.org</a></td><td>Fort Worth area education</td></tr>
+          <tr><td><strong>O'Donnell Foundation</strong></td><td><a href="https://odonnellfoundation.org" target="_blank">odonnellfoundation.org</a></td><td>K–12, STEM, higher ed (Dallas)</td></tr>
+          <tr><td><strong>Michael & Susan Dell Foundation</strong></td><td><a href="https://dell.org" target="_blank">dell.org</a></td><td>Education & health (Austin)</td></tr>
+          <tr><td><strong>Raise Your Hand Texas</strong></td><td><a href="https://raiseyourhandtexas.org" target="_blank">raiseyourhandtexas.org</a></td><td>Ed advocacy + grants</td></tr>
+          <tr><td><strong>Moody Foundation</strong></td><td><a href="https://moodyf.org" target="_blank">moodyf.org</a></td><td>Galveston/statewide</td></tr>
+          <tr><td><strong>Brown Foundation</strong></td><td><a href="https://brownfoundation.org" target="_blank">brownfoundation.org</a></td><td>Houston, heavy ed focus</td></tr>
+          <tr><td><strong>T.L.L. Temple Foundation</strong></td><td><a href="https://tlltemple.org" target="_blank">tlltemple.org</a></td><td>East Texas education & rural communities</td></tr>
+          <tr><td><strong>Communities Foundation of Texas</strong></td><td><a href="https://cftexas.org" target="_blank">cftexas.org</a></td><td>Statewide giving</td></tr>
+          <tr><td><strong>Permian Strategic Partnership</strong></td><td><a href="https://permianstrategicpartnership.org" target="_blank">permianstrategicpartnership.org</a></td><td>West TX/Permian Basin education</td></tr>
+        </tbody>
+      </table>
+
+      <h3>National Foundations (Education Research)</h3>
+      <table>
+        <thead><tr><th>Foundation</th><th>Website</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Spencer Foundation</strong></td><td><a href="https://spencer.org" target="_blank">spencer.org</a></td><td>Small grants up to $50K, large up to $500K — two cycles/year</td></tr>
+          <tr><td><strong>William T. Grant Foundation</strong></td><td><a href="https://wtgrantfoundation.org" target="_blank">wtgrantfoundation.org</a></td><td>Youth outcomes + research use in policy</td></tr>
+          <tr><td><strong>Gates Foundation</strong></td><td><a href="https://gatesfoundation.org" target="_blank">gatesfoundation.org</a></td><td>K–12 + higher ed innovation</td></tr>
+          <tr><td><strong>Arnold Ventures</strong></td><td><a href="https://arnoldventures.org" target="_blank">arnoldventures.org</a></td><td>Evidence-based ed policy</td></tr>
+          <tr><td><strong>Walton Family Foundation</strong></td><td><a href="https://waltonfamilyfoundation.org" target="_blank">waltonfamilyfoundation.org</a></td><td>K–12 education reform</td></tr>
+          <tr><td><strong>Overdeck Family Foundation</strong></td><td><a href="https://overdeck.org" target="_blank">overdeck.org</a></td><td>Birth–8th grade learning (updated 2026 strategy)</td></tr>
+          <tr><td><strong>Chan Zuckerberg Initiative</strong></td><td><a href="https://chanzuckerberg.com" target="_blank">chanzuckerberg.com</a></td><td>Ed R&D (partnered w/ Gates + Walton in AERDF)</td></tr>
+          <tr><td><strong>AERDF</strong></td><td><a href="https://aerdf.org" target="_blank">aerdf.org</a></td><td>Advanced Education R&D Fund</td></tr>
+          <tr><td><strong>Carnegie Corporation of NY</strong></td><td><a href="https://carnegie.org" target="_blank">carnegie.org</a></td><td>Education & democracy</td></tr>
+          <tr><td><strong>Wallace Foundation</strong></td><td><a href="https://wallacefoundation.org" target="_blank">wallacefoundation.org</a></td><td>Leadership + arts education</td></tr>
+          <tr><td><strong>Lumina Foundation</strong></td><td><a href="https://luminafoundation.org" target="_blank">luminafoundation.org</a></td><td>Higher ed access & attainment</td></tr>
+          <tr><td><strong>Joyce Foundation</strong></td><td><a href="https://joycefdn.org" target="_blank">joycefdn.org</a></td><td>Midwest + national ed policy</td></tr>
+          <tr><td><strong>Ford Foundation</strong></td><td><a href="https://fordfoundation.org" target="_blank">fordfoundation.org</a></td><td>Equity-focused education grants</td></tr>
+          <tr><td><strong>IES</strong></td><td><a href="https://ies.ed.gov" target="_blank">ies.ed.gov</a></td><td>Federal research funding + training programs</td></tr>
+          <tr><td><strong>NSF</strong></td><td><a href="https://nsf.gov" target="_blank">nsf.gov</a></td><td>Education research & STEM</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Rural Education — Texas & National</h3>
+      <p>Texas has a large rural school population. These are especially worth monitoring for grants and events.</p>
+      <table>
+        <thead><tr><th>Organization</th><th>Website</th><th>Focus</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Rural Schools Collaborative</strong></td><td><a href="https://ruralschoolscollaborative.org" target="_blank">ruralschoolscollaborative.org</a></td><td>Grants in Place program (Bezos-funded)</td></tr>
+          <tr><td><strong>NREA</strong></td><td><a href="https://nrea.net" target="_blank">nrea.net</a></td><td>Research + National Forum Oct 2026 in San Antonio!</td></tr>
+          <tr><td><strong>Texas Rural Funders</strong></td><td><a href="https://texasruralfunders.org" target="_blank">texasruralfunders.org</a></td><td>TX-specific rural grants database</td></tr>
+          <tr><td><strong>Patterson Family Foundation</strong></td><td><a href="https://pattersonfamilyfoundation.org" target="_blank">pattersonfamilyfoundation.org</a></td><td>Rural educator development grants</td></tr>
+          <tr><td><strong>Bezos Family Foundation</strong></td><td><a href="https://bezosfamilyfoundation.org" target="_blank">bezosfamilyfoundation.org</a></td><td>Place-Based Ed, rural focus</td></tr>
+          <tr><td><strong>Laura Jane Musser Fund</strong></td><td><a href="https://musserfund.org" target="_blank">musserfund.org</a></td><td>Rural community grants up to $25K</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ── CLAUDE CODE ── -->
+    <section class="section" id="claudecode">
+      <div class="section-title"><span class="s-icon"></span> Claude Code</div>
+      <div class="section-divider"></div>
+      <p>You mentioned wanting to improve your Claude skills beyond just using claude.ai. Claude Code is the natural next step — and this newsletter project is actually a great sandbox for it.</p>
+
+      <h3>What Is Claude Code?</h3>
+      <p>Claude Code is a command-line tool made by Anthropic (same company as Claude). Instead of chatting in a browser, you work with Claude directly in your terminal. The big difference: Claude Code can read and write files on your computer, run code, and take multi-step actions on your behalf — not just answer questions.</p>
+      <p>Think of it as the difference between asking Claude to describe how to do something vs. having Claude actually do it while you watch.</p>
+
+      <h3>Why It's Relevant for This Project</h3>
+      <p>Right now the workflow is manual: you visit a page, use the Chrome extension or copy-paste, run a prompt, copy the output into the Google Sheet. Claude Code can change that. For example, you could tell it:</p>
+      <div class="prompt-block">"Write a Python script that visits each of these 10 URLs, extracts
+all job postings, filters out anything older than 90 days,
+and saves the results to a CSV file."</div>
+      <p>Claude Code would write that script, run it, and hand you the CSV. No copy-paste, no tab-switching. That's the difference in practice.</p>
+      <p>It's also great for the problem sites — Claude Code with a browser tool can handle JavaScript-heavy pages that the Chrome extension can't.</p>
+
+      <h3>How to Get Started</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <p><strong>Make sure Node.js is installed</strong></p>
+            <p>Check by opening Terminal and typing <code>node --version</code>. If nothing comes back, download it from <a href="https://nodejs.org" target="_blank">nodejs.org</a> (the LTS version).</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <p><strong>Install Claude Code</strong></p>
+            <p>In Terminal, run: <code>npm install -g @anthropic-ai/claude-code</code></p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <p><strong>Launch it</strong></p>
+            <p>Navigate to a folder in Terminal (e.g., <code>cd Desktop</code>), then type <code>claude</code>. You'll be in an interactive session where you can give it tasks.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <p><strong>Try a simple task first</strong></p>
+            <p>Ask it to write a script that reads the Ed Policy Org List CSV and outputs just the foundation URLs. Small, concrete tasks are the best way to learn how it works.</p>
+          </div>
+        </div>
+      </div>
+
+      <h3>The Learning Path</h3>
+      <table>
+        <thead><tr><th>Stage</th><th>Tool</th><th>What You're Doing</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Starting out</strong></td><td>Claude.ai Projects</td><td>Manual scraping with prompts + Chrome extension. Build the workflow, learn what works.</td></tr>
+          <tr><td><strong>Level up</strong></td><td>Claude Code</td><td>Ask Claude to write scripts that automate the repetitive parts. Learn basic Python along the way.</td></tr>
+          <tr><td><strong>Advanced</strong></td><td>Claude Code + Firecrawl API</td><td>Fully automated pipeline: scrape all sources, filter, output to spreadsheet. Minimal manual work.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="tip">
+        <strong>You don't need coding experience to start with Claude Code.</strong> You can ask it to explain every line it writes, ask it to teach you what a function does, or ask it to rewrite something more simply. It's genuinely one of the best ways to pick up coding skills because you see working code immediately and can ask questions about it in context.
+      </div>
+
+      <h3>Resources</h3>
+      <ul>
+        <li><a href="https://docs.anthropic.com/en/docs/claude-code" target="_blank">Claude Code documentation</a> — official docs, setup guide, examples</li>
+        <li>Start with the <a href="https://docs.anthropic.com/en/docs/claude-code/quickstart" target="_blank">quickstart guide</a> — takes about 10 minutes</li>
+      </ul>
+    </section>
+
+    <!-- ── BI-WEEKLY WORKFLOW ── -->
+    <section class="section" id="workflow">
+      <div class="section-title"><span class="s-icon">📅</span> Bi-Weekly Workflow</div>
+      <div class="section-divider"></div>
+      <p>Once the workflow is running, here's a suggested rhythm each newsletter cycle. Adapt it to what works for you.</p>
+      <table class="workflow-table">
+        <thead><tr><th>When</th><th>What to Do</th></tr></thead>
+        <tbody>
+          <tr><td>Monday morning</td><td>Run the jobs prompt across job boards + org list careers pages</td></tr>
+          <tr><td>Monday midday</td><td>Run the events prompt across events sources</td></tr>
+          <tr><td>Monday afternoon</td><td>Run the grants + CFPs prompts across foundation sites</td></tr>
+          <tr><td>Monday end of day</td><td>Drop everything into the Google Sheet (one tab per content type)</td></tr>
+          <tr><td>Tuesday morning</td><td>Kate reviews, pulls what she needs, builds the newsletter</td></tr>
+        </tbody>
+      </table>
+
+      <div class="tip">
+        <strong>Email idea:</strong> Consider creating a dedicated email address just for newsletter content (e.g., <em>ercnewsletter@gmail.com</em>). Subscribe it to org listservs, conference announcements, and foundation newsletters — content starts coming to you instead of you hunting for it every cycle.
+      </div>
+    </section>
+
+    <!-- ── TRACKING & CHANGELOG ── -->
+    <section class="section" id="tracking">
+      <div class="section-title"><span class="s-icon">📝</span> Tracking & Changelog</div>
+      <div class="section-divider"></div>
+      <p>No need for anything fancy. As you refine the workflow, just keep a running log so you remember what changed and why — and so Kate knows what she's getting when you hand it off.</p>
+
+      <h3>The Google Sheet Setup</h3>
+      <p>The Google Sheet Kate shares has these tabs:</p>
+      <table>
+        <thead><tr><th>Tab</th><th>Columns</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Jobs</strong></td><td>Title · Institution · Dept · Deadline · Link · Status</td></tr>
+          <tr><td><strong>Events</strong></td><td>Title · Date & Time · Host Org · Virtual/In-Person · Link · Description · Status</td></tr>
+          <tr><td><strong>Grants & Funding</strong></td><td>Name · Funder · Amount · Deadline · Link · Description · Status</td></tr>
+          <tr><td><strong>CFPs</strong></td><td>Title · Type · Organization · Deadline · Link · Status</td></tr>
+          <tr><td><strong>⚠️ Problem Sites</strong></td><td>URL · Issue · Workaround tried · Date logged</td></tr>
+          <tr><td><strong>📝 Changelog</strong></td><td>Date · What you changed · Why · Result</td></tr>
+        </tbody>
+      </table>
+      <p>The <strong>Status</strong> column on each content tab is for Kate — she marks each row: <em>Include / Skip / Review</em>.</p>
+
+      <h3>How to Use the Changelog</h3>
+      <p>Every time you tweak a prompt or figure out something new, log it. Keep it simple:</p>
+      <div class="prompt-block">April 8 — Changed jobs prompt to add "exclude anything older than 90 days."
+Result: stopped pulling stale AEFP listings. Much better.
+
+April 10 — AERA job board side panel issue.
+Tried extension, didn't get full listings. Copy-paste works fine.
+Added to Problem Sites tab.</div>
+      <p>That's all it needs to be. When you hand off to Kate, she gets the refined system prompt + this log = full picture of how the workflow evolved.</p>
+    </section>
+
+    <!-- ── HANDOFF TO KATE ── -->
+    <section class="section" id="handoff">
+      <div class="section-title"><span class="s-icon">🤝</span> Handoff to Kate</div>
+      <div class="section-divider"></div>
+      <p>The end goal is for Kate to run this workflow herself on her own Claude subscription. Here's what the handoff looks like when you're ready.</p>
+
+      <h3>What You Hand Off</h3>
+      <ul>
+        <li><strong>Your final system prompt</strong> — copy it out of your Claude Project Instructions and paste it into a text file. This is the most important thing.</li>
+        <li><strong>The Google Sheet</strong> — share it with Kate. She gets the output tabs, Problem Sites tab, and Changelog all in one place.</li>
+        <li><strong>Any prompt variations</strong> that work better for specific sites — note them in the Changelog tab.</li>
+      </ul>
+
+      <h3>How Kate Sets It Up on Her End</h3>
+      <p>Kate creates a new Claude Project on her account, pastes in your final system prompt, uploads the same knowledge files, and she's running. Takes about 10 minutes. She doesn't need your login — just the instructions.</p>
+
+      <div class="callout">
+        <strong>No rush on this.</strong> The handoff happens when the workflow is reliable, not on a hard deadline. Kate is still doing everything manually in the meantime — you're just making it better over time.
+      </div>
+
+      <p style="margin-top: 20px; color: var(--text-muted); font-size: .88rem;">Questions? Reach out to Kate. This is collaborative — you're not expected to figure it all out alone.</p>
+    </section>
+
+  </main>
+</div>
+
+<script>
+function setActive(el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// Highlight nav item based on scroll position
+const main = document.getElementById('main');
+const sections = document.querySelectorAll('.section');
+const navItems = document.querySelectorAll('.nav-item');
+
+main.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => {
+    if (s.offsetTop - 60 <= main.scrollTop) current = s.id;
+  });
+  navItems.forEach(n => {
+    n.classList.toggle('active', n.getAttribute('href') === '#' + current);
+  });
+});
+</script>
+</body>
+</html>
