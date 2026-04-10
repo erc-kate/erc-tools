@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event Planning Manual — ERC Event Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;700&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 15px; background: #f5f5f5; color: #1a1a1a; min-height: 100vh;
+    }
+
+    /* ── Header ──────────────────────────────────────────── */
+    .page-header { background: #500000; color: #fff; padding: 24px 24px 20px; }
+    .page-header-inner { max-width: 1080px; margin: 0 auto; }
+    .back-link {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 0.8rem; color: rgba(255,255,255,0.65); text-decoration: none; margin-bottom: 8px;
+    }
+    .back-link:hover { color: #fff; }
+    .page-header h1 { font-family: 'Work Sans', sans-serif; font-size: 1.4rem; font-weight: 700; }
+    .page-header p  { font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-top: 4px; }
+
+    /* ── Layout ──────────────────────────────────────────── */
+    .layout {
+      max-width: 1080px; margin: 0 auto; padding: 28px 24px 80px;
+      display: grid; grid-template-columns: 220px 1fr; gap: 28px; align-items: start;
+    }
+
+    /* ── Sticky sidebar ──────────────────────────────────── */
+    .sidebar {
+      position: sticky; top: 24px;
+      background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;
+      padding: 18px 0; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .sidebar-title {
+      font-family: 'Work Sans', sans-serif; font-size: 0.7rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em; color: #aaa; padding: 0 18px 10px;
+    }
+    .nav-link {
+      display: block; padding: 7px 18px;
+      font-size: 0.83rem; color: #555; text-decoration: none;
+      border-left: 2px solid transparent; line-height: 1.4;
+      transition: background 0.1s, color 0.1s, border-color 0.1s;
+    }
+    .nav-link:hover { background: #fdf5f5; color: #500000; border-left-color: #d88; }
+    .nav-link.active { background: #fdf0f0; color: #500000; border-left-color: #500000; font-weight: 600; }
+    .nav-link.sub { padding-left: 30px; font-size: 0.8rem; color: #888; }
+    .nav-link.sub:hover { color: #500000; }
+
+    /* ── Content ─────────────────────────────────────────── */
+    .content { min-width: 0; }
+
+    .section {
+      background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;
+      padding: 28px 30px; margin-bottom: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06); scroll-margin-top: 24px;
+    }
+
+    .section-title {
+      font-family: 'Work Sans', sans-serif; font-size: 1.2rem; font-weight: 700;
+      color: #1a1a1a; padding-bottom: 12px; margin-bottom: 16px;
+      border-bottom: 2px solid #f0e0e0;
+    }
+
+    .section-subtitle {
+      font-family: 'Work Sans', sans-serif; font-size: 0.95rem; font-weight: 700;
+      color: #333; margin: 22px 0 10px;
+    }
+
+    p { line-height: 1.7; color: #333; margin-bottom: 12px; }
+    p:last-child { margin-bottom: 0; }
+    ul, ol { padding-left: 20px; line-height: 1.7; color: #333; margin-bottom: 12px; }
+    li { margin-bottom: 4px; }
+    a { color: #500000; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Info table ──────────────────────────────────────── */
+    .info-table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 0.875rem; }
+    .info-table th {
+      text-align: left; padding: 8px 12px; background: #f5f5f5;
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.04em; color: #888; border-bottom: 1px solid #e0e0e0;
+    }
+    .info-table td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+    .info-table tr:last-child td { border-bottom: none; }
+
+    /* ── Callouts ────────────────────────────────────────── */
+    .callout {
+      border-radius: 6px; padding: 14px 18px; margin: 14px 0; border-left: 3px solid;
+    }
+    .callout-info  { background: #eef0f8; border-left-color: #1565c0; }
+    .callout-tip   { background: #eef6ee; border-left-color: #4caf50; }
+    .callout-warn  { background: #fdf0f0; border-left-color: #500000; }
+    .callout-cred  { background: #fffbec; border-left-color: #f0d58a; }
+
+    .callout-label {
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.05em; margin-bottom: 6px;
+    }
+    .callout-info .callout-label  { color: #1565c0; }
+    .callout-tip  .callout-label  { color: #2e7d32; }
+    .callout-warn .callout-label  { color: #500000; }
+    .callout-cred .callout-label  { color: #7a5500; }
+
+    .callout p  { font-size: 0.875rem; margin-bottom: 6px; }
+    .callout p:last-child { margin-bottom: 0; }
+    .callout ul { font-size: 0.875rem; margin-bottom: 0; }
+    .callout code {
+      font-family: monospace; font-size: 0.85rem;
+      background: rgba(0,0,0,0.06); padding: 1px 5px; border-radius: 3px;
+    }
+
+    /* ── Email template box ──────────────────────────────── */
+    .email-template {
+      background: #fafafa; border: 1px solid #e0e0e0; border-radius: 6px;
+      padding: 16px 18px; margin: 14px 0; font-size: 0.855rem; line-height: 1.7; color: #333;
+    }
+    .email-template .email-subject {
+      font-weight: 700; color: #1a1a1a; margin-bottom: 10px; font-size: 0.875rem;
+    }
+    .email-placeholder {
+      font-style: italic; color: #888;
+    }
+
+    /* ── Team pills ──────────────────────────────────────── */
+    .pill {
+      display: inline-block; font-size: 0.72rem; font-weight: 700;
+      padding: 2px 8px; border-radius: 3px; margin-left: 4px; vertical-align: middle;
+    }
+    .pill-kb { background: #fce8e8; color: #7a0000; }
+    .pill-ak { background: #e8f5e8; color: #1a5c1a; }
+    .pill-ga { background: #f5e8ff; color: #5c1a8f; }
+
+    /* ── Workflow flow ───────────────────────────────────── */
+    .flow {
+      display: flex; align-items: center; gap: 0; flex-wrap: wrap;
+      margin: 16px 0; background: #fafafa; border: 1px solid #eee;
+      border-radius: 6px; padding: 16px 20px;
+    }
+    .flow-step { text-align: center; padding: 10px 14px; }
+    .flow-step-icon {
+      width: 34px; height: 34px; border-radius: 50%; background: #500000; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem; font-weight: 700; margin: 0 auto 6px;
+    }
+    .flow-step-label { font-size: 0.78rem; font-weight: 600; color: #333; }
+    .flow-step-sub   { font-size: 0.7rem; color: #888; line-height: 1.4; margin-top: 2px; }
+    .flow-arrow { font-size: 1.2rem; color: #ccc; padding: 0 2px; }
+
+    /* ── Timeline ────────────────────────────────────────── */
+    .timeline { margin: 16px 0; }
+    .timeline-row { display: flex; gap: 0; margin-bottom: 2px; }
+    .timeline-label {
+      flex-shrink: 0; width: 120px; text-align: right; padding: 12px 16px 12px 0;
+      font-size: 0.8rem; font-weight: 700; color: #500000; line-height: 1.3;
+      border-right: 2px solid #f0e0e0;
+    }
+    .timeline-content { flex: 1; padding: 10px 0 10px 20px; }
+    .timeline-content ul { margin-bottom: 0; padding-left: 16px; }
+    .timeline-content li { font-size: 0.875rem; color: #333; margin-bottom: 3px; }
+
+    /* ── Channel chips ───────────────────────────────────── */
+    .channel-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+    .channel-chip {
+      font-size: 0.8rem; font-weight: 600; padding: 5px 12px;
+      background: #f0f0f0; color: #444; border-radius: 20px;
+    }
+
+    /* ── Checklist ───────────────────────────────────────── */
+    .checklist { list-style: none; padding: 0; margin: 12px 0; }
+    .checklist li {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 6px 0; border-bottom: 1px solid #f5f5f5; font-size: 0.875rem; color: #333;
+    }
+    .checklist li:last-child { border-bottom: none; }
+    .checklist li::before {
+      content: "☐"; flex-shrink: 0; font-size: 1rem; color: #500000; margin-top: 1px;
+    }
+
+    /* ── Responsive ──────────────────────────────────────── */
+    @media (max-width: 720px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+      .timeline-label { width: 80px; font-size: 0.72rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="page-header-inner">
+    <a href="index.html" class="back-link">&larr; Event Hub</a>
+    <h1>Event Planning Manual</h1>
+    <p>Education Research Center — Reference Guide for Event Coordinators</p>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- ── Sidebar Nav ───────────────────────────────────── -->
+  <nav class="sidebar" id="sidebarNav">
+    <div class="sidebar-title">Contents</div>
+    <a class="nav-link" href="#basics">1. Event Basics</a>
+    <a class="nav-link" href="#room">2. Reserve a Room</a>
+    <a class="nav-link" href="#rsvp">3. RSVP Form</a>
+    <a class="nav-link" href="#marketing">4. Market the Event</a>
+    <a class="nav-link" href="#food">5. Food &amp; Catering</a>
+    <a class="nav-link" href="#dayof">6. Day-of Guide</a>
+    <a class="nav-link sub" href="#parking">Parking</a>
+    <a class="nav-link sub" href="#av">AV &amp; Zoom</a>
+    <a class="nav-link sub" href="#setup">Setup &amp; Roles</a>
+    <a class="nav-link sub" href="#cleanup">Cleanup</a>
+    <a class="nav-link" href="#followup">7. After the Event</a>
+    <a class="nav-link" href="#hub">Event Hub Guide</a>
+    <a class="nav-link" href="#contacts">Contacts</a>
+  </nav>
+
+  <!-- ── Content ───────────────────────────────────────── -->
+  <div class="content">
+
+    <!-- 1. EVENT BASICS -->
+    <section class="section" id="basics">
+      <div class="section-title">1. Event Basics</div>
+      <p>
+        Before requesting anything (room, catering, marketing), collect these details from
+        the organizer and keep them in one place. All of this information is also accessible
+        in the spreadsheet under the <strong>Event</strong> tab once an event is approved.
+      </p>
+
+      <table class="info-table">
+        <thead><tr><th>Detail</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Event title</strong></td><td></td></tr>
+          <tr><td><strong>Date + start/end time</strong></td><td></td></tr>
+          <tr><td><strong>Expected attendance</strong></td><td>Estimate + max capacity goal</td></tr>
+          <tr><td><strong>Format</strong></td><td>Lecture / panel / discussion / small groups — determines room setup</td></tr>
+          <tr><td><strong>Preferred location</strong></td><td>MSC / Rudder / Gilchrist / etc.</td></tr>
+          <tr><td><strong>Food</strong></td><td>Yes/no + what kind (coffee, snacks, lunch)</td></tr>
+          <tr><td><strong>Point person day-of</strong></td><td>Name + phone + backup person</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-warn">
+        <div class="callout-label">Stop Before You Start</div>
+        <p>If anything in the table above is missing, stop and get it first. Don't book a room or order food without confirmed attendance estimates and a confirmed date.</p>
+      </div>
+
+      <div class="section-subtitle">Hybrid / Zoom Setup</div>
+      <p>
+        For speaker events and speaker series, we offer virtual attendance via Zoom.
+        Use the <strong>ERC standing meeting link</strong> — no need to create a new link each time.
+        Include the Zoom link in the event blurb, RSVP confirmation, and day-of reminders.
+      </p>
+      <div class="callout callout-cred">
+        <div class="callout-label">ERC Zoom Meeting Info</div>
+        <p><strong>Link:</strong> <a href="https://tamu.zoom.us/j/3728395283?pwd=WoTHqt6Ppbw0XSYEAiQqMFLNd6Ba8W.1" target="_blank">https://tamu.zoom.us/j/3728395283</a><br>
+        <em>Use shorter text when linking — e.g. <a href="https://tamu.zoom.us/j/3728395283?pwd=WoTHqt6Ppbw0XSYEAiQqMFLNd6Ba8W.1" target="_blank">Click Here</a></em></p>
+        <p><strong>Meeting ID:</strong> <code>372 839 5283</code><br>
+        <strong>Passcode:</strong> <code>erc2026</code></p>
+      </div>
+    </section>
+
+    <!-- 2. RESERVE A ROOM -->
+    <section class="section" id="room">
+      <div class="section-title">2. Reserve a Room</div>
+      <p>
+        Room selection depends on headcount, format, and whether food will be served.
+      </p>
+
+      <table class="info-table">
+        <thead><tr><th>Location</th><th>Best For</th><th>Contact</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>MSC / Rudder</strong></td>
+            <td>Most public events. Rooms sized by headcount and session type.</td>
+            <td><a href="mailto:robinburns@tamu.edu">Robin Burns</a></td>
+          </tr>
+          <tr>
+            <td><strong>Gilchrist (conference rooms)</strong></td>
+            <td>ERC internal meetings (not events).</td>
+            <td><a href="mailto:andreatrevino@tamu.edu">Andrea Trevino</a></td>
+          </tr>
+          <tr>
+            <td><strong>Harrington / Gilchrist (classrooms)</strong></td>
+            <td>Larger groups; available during off-class times.</td>
+            <td>See above</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-warn">
+        <div class="callout-label">Food in Rooms</div>
+        <p>Some rooms require confirmation or approval if food will be served. When booking, flag whether food is planned — you'll need to confirm the room's food policy before finalizing.</p>
+      </div>
+
+      <div class="section-subtitle">Room Request Email Template</div>
+      <p>CC both <a href="mailto:katebarnes@tamu.edu">Kate</a> and <a href="mailto:akwok@tamu.edu">Andy</a> on all room requests.</p>
+      <div class="email-template">
+        <div class="email-subject">Subject: Room request for ERC event — [Event Title], [Date]</div>
+        Hi [Name],<br><br>
+        Can you help reserve a room for an ERC event?<br><br>
+        <strong>Event:</strong> [Event title]<br>
+        <strong>Date:</strong> [Month Day, Year]<br>
+        <strong>Time:</strong> [Start–End] (plus setup buffer if possible)<br>
+        <strong>Expected attendance:</strong> [#]<br>
+        <strong>Format:</strong> [lecture / panel / discussion / small groups]<br>
+        <strong>Preferred building/location:</strong> [MSC / Rudder / Gilchrist / etc.]<br>
+        <strong>Food:</strong> [none / light refreshments / lunch] (we can confirm any room food rules as needed)<br><br>
+        Thank you!<br>
+        [Your name]
+      </div>
+    </section>
+
+    <!-- 3. RSVP FORM -->
+    <section class="section" id="rsvp">
+      <div class="section-title">3. Create an RSVP Form</div>
+      <p>
+        Use <strong>Google Forms</strong> or Microsoft Forms for RSVPs. Check responses regularly
+        to adjust food count, room size, and dietary planning.
+      </p>
+
+      <div class="section-subtitle">Standard Fields</div>
+      <p><em>Adjust based on the event — skip dietary questions if no food is provided. Always include the listserv checkbox.</em></p>
+      <ul>
+        <li>Name</li>
+        <li>Email address</li>
+        <li>Role (student / faculty / staff / community)</li>
+        <li>Department / college</li>
+        <li>Food allergies / dietary needs <em>(if food is provided)</em></li>
+        <li>Checkbox: "Add me to the ERC listserv"</li>
+        <li>Checkbox: "Will you attend via Zoom?" <em>(speaker/lecture events only)</em></li>
+      </ul>
+
+      <div class="callout callout-tip">
+        <div class="callout-label">How to Use RSVP Data</div>
+        <ul>
+          <li>Monitor responses up to 1 week before the event</li>
+          <li>Use headcount to finalize catering order quantities</li>
+          <li>Flag anyone with dietary restrictions and note it on the catering order</li>
+          <li>If Zoom attendees are high, make sure room A/V is set up for hybrid</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 4. MARKETING -->
+    <section class="section" id="marketing">
+      <div class="section-title">4. Market the Event</div>
+      <p>Use the following channels for all public ERC events unless the organizer says otherwise.</p>
+
+      <div class="channel-list">
+        <span class="channel-chip">ERC Newsletter</span>
+        <span class="channel-chip">ERC Website</span>
+        <span class="channel-chip">CEHD MarCom</span>
+        <span class="channel-chip">TLAC Listserv</span>
+        <span class="channel-chip">Graduate Students</span>
+      </div>
+
+      <table class="info-table" style="margin-top:16px;">
+        <thead><tr><th>Channel</th><th>How</th><th>Contact</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>ERC Newsletter</strong></td>
+            <td>Kate manages the newsletter — submit content to her.</td>
+            <td><a href="mailto:katebarnes@tamu.edu">Kate Barnes</a></td>
+          </tr>
+          <tr>
+            <td><strong>ERC Website</strong></td>
+            <td>Post the event with title, date/time, location, description, RSVP link, parking note, and contact email. Create a clean shareable URL. <a href="https://drive.google.com/file/d/1prHYafEO63xGh8qBFR0DrnZRpMgPPqur/view?usp=sharing" target="_blank">Video walkthrough</a></td>
+            <td>Login help: <a href="mailto:akwok@tamu.edu">Andy Kwok</a></td>
+          </tr>
+          <tr>
+            <td><strong>CEHD MarCom</strong></td>
+            <td>Submit through <a href="https://mycehd.tamu.edu/marcom/" target="_blank">mycehd.tamu.edu/marcom</a>. Request calendar listing + email to the college.</td>
+            <td>MarCom portal</td>
+          </tr>
+          <tr>
+            <td><strong>TLAC Listserv</strong></td>
+            <td>Email Robin Alderete and ask to share with the TLAC listserv.</td>
+            <td><a href="mailto:ralderete@tamu.edu">Robin Alderete</a></td>
+          </tr>
+          <tr>
+            <td><strong>Graduate Students</strong></td>
+            <td>Email Kerri Smith and ask to share with graduate students.</td>
+            <td><a href="mailto:ksmith@tamu.edu">Kerri Smith</a></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="section-subtitle">Distribution Email Template</div>
+      <div class="email-template">
+        <div class="email-subject">Subject: [Event Title] | [Listserv Type] Listserv</div>
+        Dear [Name],<br><br>
+        I hope you're doing well! I'm writing to ask if you'd be willing to share the following event with the [department / listserv / college / etc.].<br><br>
+        [Paste event blurb here]<br><br>
+        Thank you!<br>
+        [Your name]
+      </div>
+
+      <div class="section-subtitle">Communications Cadence</div>
+      <ul>
+        <li><strong>4 weeks before</strong> — Initial announcement (newsletter, website, listservs)</li>
+        <li><strong>1–2 weeks before</strong> — Reminder with time, location, RSVP link, parking note</li>
+        <li><strong>24 hours before</strong> — Final reminder with same details + Zoom link if applicable</li>
+      </ul>
+    </section>
+
+    <!-- 5. FOOD & CATERING -->
+    <section class="section" id="food">
+      <div class="section-title">5. Food &amp; Catering</div>
+      <p><em>Only complete this section if food is confirmed for the event.</em></p>
+
+      <div class="section-subtitle">Step 1: Submit a TLAC Purchase Request</div>
+      <p>
+        Before ordering anything, you need purchase approval. Submit a
+        <a href="https://mycehd.tamu.edu/business-office/purchase-requests-reimbursements/" target="_blank">TLAC Purchase Request</a>
+        with the following information. Andy can provide a step-by-step walkthrough.
+      </p>
+      <ul>
+        <li>Price estimate</li>
+        <li>Estimated headcount</li>
+        <li>Event timing (date + start/end time)</li>
+        <li>Event title and description</li>
+      </ul>
+
+      <div class="section-subtitle">Step 2: Order Catering</div>
+      <p>
+        After the purchase request is approved, order catering. The easiest and lowest-risk option is
+        <strong>EZCater</strong> (delivery included).
+      </p>
+      <div class="callout callout-cred">
+        <div class="callout-label">EZCater Login</div>
+        <p><strong>URL:</strong> <a href="https://www.ezcater.com/sign_in" target="_blank">ezcater.com/sign_in</a><br>
+        <strong>Email:</strong> <code>akwok@tamu.edu</code><br>
+        <strong>Password:</strong> <code>tamuERC01!</code><br>
+        <strong>⚠ 2FA Required:</strong> Slack Andy <em>before</em> logging in so he can approve the authentication code from his phone or email.</p>
+      </div>
+      <p>
+        Alternative: pick up food yourself — but only as a last resort, especially for larger events.
+      </p>
+
+      <div class="section-subtitle">Food Logistics</div>
+      <ul>
+        <li>Confirm delivery address includes: <strong>building name + room number + best entrance</strong></li>
+        <li>Set food on a designated table with napkins, utensils, and a trash can nearby</li>
+        <li>Label dietary items where possible (vegetarian, gluten-free, etc.)</li>
+        <li>End of event: quick cleanup — bag trash and decide on leftover plan</li>
+      </ul>
+    </section>
+
+    <!-- 6. DAY-OF -->
+    <section class="section" id="dayof">
+      <div class="section-title">6. Day-of Guide</div>
+
+      <!-- Parking -->
+      <div class="section-subtitle" id="parking">Parking</div>
+      <p><em>Mention parking in the 24-hour reminder email if the event is on central campus or at Gilchrist.</em></p>
+      <ul>
+        <li>
+          <strong>Central campus events:</strong>
+          <a href="https://www.google.com/maps/place/Gene+Stallings+Blvd.+Garage+(SBG)/@30.6118407,-96.3456185,16z" target="_blank">Gene Stallings Garage</a>
+          — validation passes available
+        </li>
+        <li>
+          <strong>Gilchrist events:</strong>
+          <a href="https://www.google.com/maps/place/Fan+Field+Parking+Lots/@30.5996339,-96.3570657,17z" target="_blank">Fan Field Parking Lots</a>
+        </li>
+        <li>Parking passes: get from Andy or Kate, or request through <a href="mailto:robinburns@tamu.edu">Robin Burns</a> via the ERC account</li>
+        <li>Bring passes to the event and be ready to direct attendees where to pick them up</li>
+      </ul>
+
+      <!-- AV & Zoom -->
+      <div class="section-subtitle" id="av">AV &amp; Zoom</div>
+      <p>Before the event, confirm the room has what you need:</p>
+      <ul>
+        <li>Projector / screen</li>
+        <li>HDMI / USB-C adapter</li>
+        <li>Microphone (for larger rooms)</li>
+        <li>Podium</li>
+        <li>Tables for food + check-in</li>
+      </ul>
+      <p><strong>Bring (or confirm someone is bringing):</strong> laptop charger, adapter, clicker, tape, markers, extra pens. Usually handled by Kate.</p>
+
+      <div class="callout callout-info">
+        <div class="callout-label">Hybrid / Zoom Events</div>
+        <ul>
+          <li>Use the <a href="https://tamu.zoom.us/j/3728395283?pwd=WoTHqt6Ppbw0XSYEAiQqMFLNd6Ba8W.1" target="_blank">ERC standing Zoom link</a> — no new link needed</li>
+          <li>Test audio and video before the event starts</li>
+          <li>Assign someone (GA) to monitor the Zoom chat and relay questions</li>
+          <li>Confirm recording consent with the speaker <em>before</em> starting the recording</li>
+        </ul>
+      </div>
+
+      <!-- Setup & Roles -->
+      <div class="section-subtitle" id="setup">Setup &amp; Roles</div>
+      <p><strong>Arrive 30 minutes early.</strong> Assign roles before the event starts:</p>
+
+      <table class="info-table">
+        <thead><tr><th>Role</th><th>Responsibilities</th><th>Usually</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Greeter / check-in</strong></td>
+            <td>Welcome attendees, direct them to food and seating</td>
+            <td><span class="pill pill-ga">GA</span></td>
+          </tr>
+          <tr>
+            <td><strong>Food setup lead</strong></td>
+            <td>Receive catering delivery, set up table, label dietary items</td>
+            <td><span class="pill pill-kb">KB</span> or <span class="pill pill-ga">GA</span></td>
+          </tr>
+          <tr>
+            <td><strong>A/V helper</strong></td>
+            <td>Slides, mic, Zoom monitoring, recording</td>
+            <td><span class="pill pill-ak">AK</span> or <span class="pill pill-ga">GA</span></td>
+          </tr>
+          <tr>
+            <td><strong>Runner</strong></td>
+            <td>Last-minute tasks, extra supplies, anything unexpected</td>
+            <td><span class="pill pill-ga">GA</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Cleanup -->
+      <div class="section-subtitle" id="cleanup">Cleanup</div>
+      <ul class="checklist">
+        <li>Bag all trash and remove from the room</li>
+        <li>Box or dispose of leftovers</li>
+        <li>Return chairs, tables, and AV equipment to original positions</li>
+        <li>Collect any ERC signage, name tags, or printed materials</li>
+        <li>Stop Zoom recording; save and rename the file if applicable</li>
+        <li>Thank the speaker personally before they leave</li>
+      </ul>
+    </section>
+
+    <!-- 7. AFTER THE EVENT -->
+    <section class="section" id="followup">
+      <div class="section-title">7. After the Event</div>
+      <p>Complete these within 1–3 days of the event.</p>
+      <ul class="checklist">
+        <li>Record basics: headcount, any issues, and what to do differently next time</li>
+        <li>Send a short thank-you email to the speaker (if applicable)</li>
+        <li>Post a recap to social media (photo + short description) if appropriate</li>
+        <li>Upload recording to the ERC website or shared drive (if recording was taken with consent)</li>
+        <li>Submit any reimbursement forms for speaker travel or catering expenses</li>
+        <li>Save the final blurb / URL / RSVP link for the next event of the same type</li>
+        <li>Mark all event tasks as Done in the <a href="tasks.html">Tasks page</a></li>
+      </ul>
+    </section>
+
+    <!-- EVENT HUB GUIDE -->
+    <section class="section" id="hub">
+      <div class="section-title">Event Hub Guide</div>
+      <p>The Event Hub is the digital tool for managing ERC event planning. Here's how it all fits together:</p>
+
+      <div class="flow">
+        <div class="flow-step">
+          <div class="flow-step-icon">1</div>
+          <div class="flow-step-label">Submit</div>
+          <div class="flow-step-sub">Fill out the<br>submission form</div>
+        </div>
+        <div class="flow-arrow">›</div>
+        <div class="flow-step">
+          <div class="flow-step-icon">2</div>
+          <div class="flow-step-label">Kate Reviews</div>
+          <div class="flow-step-sub">Auto-email with<br>admin link</div>
+        </div>
+        <div class="flow-arrow">›</div>
+        <div class="flow-step">
+          <div class="flow-step-icon">3</div>
+          <div class="flow-step-label">Approve</div>
+          <div class="flow-step-sub">Adjust task<br>assignments</div>
+        </div>
+        <div class="flow-arrow">›</div>
+        <div class="flow-step">
+          <div class="flow-step-icon">4</div>
+          <div class="flow-step-label">Tasks Created</div>
+          <div class="flow-step-sub">Written to<br>spreadsheet</div>
+        </div>
+        <div class="flow-arrow">›</div>
+        <div class="flow-step">
+          <div class="flow-step-icon">5</div>
+          <div class="flow-step-label">Team Notified</div>
+          <div class="flow-step-sub">Emails sent to<br>KB / AK / GA</div>
+        </div>
+        <div class="flow-arrow">›</div>
+        <div class="flow-step">
+          <div class="flow-step-icon">✓</div>
+          <div class="flow-step-label">Plan &amp; Execute</div>
+          <div class="flow-step-sub">Track tasks on<br>the Tasks page</div>
+        </div>
+      </div>
+
+      <div class="section-subtitle">Task Due Dates</div>
+      <p>Tasks use an offset relative to the event date:</p>
+      <ul>
+        <li><strong>E–30</strong> = 30 days <em>before</em> the event</li>
+        <li><strong>E+1</strong> = 1 day <em>after</em> the event</li>
+        <li><strong>Day of</strong> = the event date itself (offset 0)</li>
+      </ul>
+      <p>Offsets are set in the <strong>templates</strong> sheet of the planning spreadsheet and can be adjusted there at any time.</p>
+
+      <div class="section-subtitle">Hub Pages</div>
+      <table class="info-table">
+        <thead><tr><th>Page</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><a href="index.html">Event Hub</a></td><td>Dashboard — upcoming events, week view, quick links</td></tr>
+          <tr><td><a href="submit.html">Submit Event</a></td><td>Form to submit a new event for approval</td></tr>
+          <tr><td><a href="admin.html">Admin</a></td><td>Kate's control panel — approve pending events, manage upcoming events</td></tr>
+          <tr><td><a href="tasks.html">Tasks</a></td><td>Team task list — all tasks across all events, filterable by person</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- CONTACTS -->
+    <section class="section" id="contacts">
+      <div class="section-title">Quick Reference Contacts</div>
+
+      <table class="info-table">
+        <thead><tr><th>Person</th><th>Role</th><th>Email</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Kate Barnes <span class="pill pill-kb">KB</span></td>
+            <td>Event coordinator — planning, food, speaker coordination, newsletter, approvals</td>
+            <td><a href="mailto:katebarnes@tamu.edu">katebarnes@tamu.edu</a></td>
+          </tr>
+          <tr>
+            <td>Andrew Kwok <span class="pill pill-ak">AK</span></td>
+            <td>Promotions, website, AV support, EZCater account, TLAC purchase requests</td>
+            <td><a href="mailto:akwok@tamu.edu">akwok@tamu.edu</a></td>
+          </tr>
+          <tr>
+            <td>Grad Ambassador <span class="pill pill-ga">GA</span></td>
+            <td>Day-of support — Zoom monitoring, setup, photography, cleanup</td>
+            <td><em>Current GA email here</em></td>
+          </tr>
+          <tr>
+            <td>Robin Burns</td>
+            <td>Room reservations (MSC &amp; Rudder), parking passes</td>
+            <td><a href="mailto:robinburns@tamu.edu">robinburns@tamu.edu</a></td>
+          </tr>
+          <tr>
+            <td>Andrea Trevino</td>
+            <td>Gilchrist conference room reservations</td>
+            <td><a href="mailto:andreatrevino@tamu.edu">andreatrevino@tamu.edu</a></td>
+          </tr>
+          <tr>
+            <td>Robin Alderete</td>
+            <td>TLAC listserv distribution</td>
+            <td><a href="mailto:ralderete@tamu.edu">ralderete@tamu.edu</a></td>
+          </tr>
+          <tr>
+            <td>Kerri Smith</td>
+            <td>Graduate student listserv distribution</td>
+            <td><a href="mailto:ksmith@tamu.edu">ksmith@tamu.edu</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+  </div><!-- .content -->
+</div><!-- .layout -->
+
+<script>
+// =============================================================
+// manual.html — ERC Event Hub
+// Static reference guide. No backend calls.
+// Highlights the active sidebar section as you scroll.
+// =============================================================
+(function() {
+  var sections = document.querySelectorAll("section[id], div[id]");
+  var links    = document.querySelectorAll(".nav-link[href^='#']");
+
+  function onScroll() {
+    var scrollY = window.scrollY + 80;
+    var active  = null;
+    sections.forEach(function(sec) {
+      if (sec.offsetTop <= scrollY) active = sec.id;
+    });
+    links.forEach(function(link) {
+      link.classList.toggle("active", link.getAttribute("href").slice(1) === active);
+    });
+  }
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+})();
+</script>
+</body>
+</html>
