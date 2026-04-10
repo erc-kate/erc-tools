@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "course-audit",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8123", "--directory", "/Users/KateBarnes/Desktop/erc-tools"],
+      "port": 8123
+    },
+    {
+      "name": "job-board",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8124", "--directory", "/Users/KateBarnes/Desktop/erc-tools/job-board"],
+      "port": 8124
+    },
+    {
+      "name": "event-hub",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8125", "--directory", "/Users/KateBarnes/Desktop/erc-tools"],
+      "port": 8125
+    }
+  ]
+}
