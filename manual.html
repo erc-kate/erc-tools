@@ -68,28 +68,29 @@
 
     /* Quick Reference card */
     .qref {
-      background: #500000; color: #fff; border-radius: 10px;
+      background: #fff; border: 1px solid #e0e0e0;
+      border-top: 3px solid #500000; border-radius: 10px;
       padding: 22px 24px; margin-bottom: 28px;
     }
     .qref-label {
       font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.1em; color: rgba(255,255,255,0.55); margin-bottom: 14px;
+      letter-spacing: 0.1em; color: #500000; margin-bottom: 14px;
     }
     .qref-grid {
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
     }
     .qref-card {
-      background: rgba(255,255,255,0.1); border-radius: 6px; padding: 12px 14px;
+      background: #fdf0f0; border-radius: 6px; padding: 12px 14px;
     }
     .qref-card-title {
       font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.07em; color: rgba(255,255,255,0.55); margin-bottom: 5px;
+      letter-spacing: 0.07em; color: #888; margin-bottom: 5px;
     }
-    .qref-card p { font-size: 0.82rem; line-height: 1.5; color: rgba(255,255,255,0.92); }
-    .qref-card a { color: #fff; }
+    .qref-card p { font-size: 0.82rem; line-height: 1.5; color: #333; }
+    .qref-card a { color: #500000; }
     .qref-card code {
-      background: rgba(0,0,0,0.25); border-radius: 3px; padding: 1px 5px;
-      font-size: 0.8em; font-family: monospace;
+      background: rgba(80,0,0,0.1); border-radius: 3px; padding: 1px 5px;
+      font-size: 0.8em; font-family: monospace; color: #500000;
     }
 
     /* Section card */
@@ -267,7 +268,7 @@
         </div>
         <div class="qref-card">
           <div class="qref-card-title">Room Reservations</div>
-          <p>MSC/Rudder: <strong>Robin Burns</strong><br>Gilchrist: <strong>Andrea Trevino</strong></p>
+          <p>MSC/Rudder: <strong>Robin Burns</strong><br><a href="mailto:[rburns@tamu.edu]">[rburns@tamu.edu]</a><br>Gilchrist: <strong>Andrea Trevino</strong><br><a href="mailto:[atrevino@tamu.edu]">[atrevino@tamu.edu]</a></p>
         </div>
         <div class="qref-card">
           <div class="qref-card-title">EZCater (Catering)</div>
@@ -275,15 +276,15 @@
         </div>
         <div class="qref-card">
           <div class="qref-card-title">Purchase Requests</div>
-          <p>TLAC Purchase Request<br>See Andy for step-by-step</p>
+          <p>TLAC Purchase Request<br>See Andy for step-by-step<br><a href="mailto:akwok@tamu.edu">akwok@tamu.edu</a></p>
         </div>
         <div class="qref-card">
           <div class="qref-card-title">CEHD MarCom</div>
-          <p>mycehd.tamu.edu/marcom<br>Submit calendar + college email</p>
+          <p><a href="https://mycehd.tamu.edu/marcom" target="_blank">mycehd.tamu.edu/marcom</a><br>Submit calendar + college email<br><a href="mailto:[marcom@cehd.tamu.edu]">[marcom@cehd.tamu.edu]</a></p>
         </div>
         <div class="qref-card">
           <div class="qref-card-title">ERC Website</div>
-          <p>Login help: Andy Kwok<br>Video walkthrough available</p>
+          <p>Login help: Andy Kwok<br><a href="mailto:akwok@tamu.edu">akwok@tamu.edu</a><br>Video walkthrough available</p>
         </div>
       </div>
     </div>
@@ -325,14 +326,33 @@
         </ul>
       </div>
       <div class="contacts">
-        <div class="contact-pill"><strong>MSC / Rudder</strong> — Robin Burns</div>
-        <div class="contact-pill"><strong>Gilchrist</strong> — Andrea Trevino</div>
+        <div class="contact-pill"><strong>MSC / Rudder</strong> — Robin Burns · <a href="mailto:[rburns@tamu.edu]">[rburns@tamu.edu]</a></div>
+        <div class="contact-pill"><strong>Gilchrist</strong> — Andrea Trevino · <a href="mailto:[atrevino@tamu.edu]">[atrevino@tamu.edu]</a></div>
       </div>
       <ul class="detail-list" style="margin-top:12px">
         <li><span class="label">What to request</span> Room capacity, AV included, setup style, accessibility needs</li>
         <li><span class="label">Gilchrist</span> Preferred for Happy Hours and smaller events. More flexible availability.</li>
         <li><span class="label">Confirmation</span> Get written confirmation. Add room details to the event record in the hub.</li>
       </ul>
+
+      <p class="sub-title">Room Request Email Template</p>
+      <div class="email-box">Subject: Room Reservation Request — <span class="placeholder">[Event Name]</span>, <span class="placeholder">[Date]</span>
+
+Hi <span class="placeholder">[Robin / Andrea]</span>,
+
+I'd like to reserve a room for an ERC event. Details below:
+
+  Event: <span class="placeholder">[Event Name]</span>
+  Date: <span class="placeholder">[Date]</span>
+  Time: <span class="placeholder">[Start]</span> – <span class="placeholder">[End]</span> (including setup/teardown)
+  Expected attendance: <span class="placeholder">[#]</span>
+  AV needs: projector, screen, microphone<span class="placeholder">[, Zoom capability if hybrid]</span>
+  Setup: <span class="placeholder">[theater / rounds / classroom]</span>
+
+Please let me know what's available. Thank you!
+
+<span class="placeholder">[Your Name]</span>
+Education Research Center, Texas A&amp;M University</div>
     </div>
 
     <!-- 3. RSVP Form -->
@@ -377,6 +397,23 @@
         <li><span class="label">Flyer</span> Use TAMU brand guidelines. Export PNG + PDF. Include speaker photo for EdTalks.</li>
         <li><span class="label">ERC Website</span> Ask Andy to post once flyer is ready. See video walkthrough for process.</li>
         <li><span class="label">Slack</span> Post in #erc-announcements once all materials are finalized.</li>
+      </ul>
+
+      <p class="sub-title">Newsletter Blurb Template</p>
+      <div class="email-box"><strong><span class="placeholder">[Event Name]</span></strong> | <span class="placeholder">[Day, Month Date]</span> at <span class="placeholder">[Time]</span> | <span class="placeholder">[Location]</span>
+
+<span class="placeholder">[1–2 sentences describing the event and why it's worth attending. For EdTalks/In the Works: mention the speaker's name, title, and research topic. For Happy Hour: keep it casual and social.]</span>
+
+<span class="placeholder">[RSVP / more info: [link]]</span>  ←  remove if no RSVP</div>
+
+      <p class="sub-title">CEHD MarCom Submission Checklist</p>
+      <ul class="detail-list">
+        <li><span class="label">Event title</span> Official event name as it should appear publicly</li>
+        <li><span class="label">Date + time</span> Include timezone (CT)</li>
+        <li><span class="label">Location</span> Room name + building, or "Virtual via Zoom"</li>
+        <li><span class="label">Description</span> 2–3 sentences, plain language, no jargon</li>
+        <li><span class="label">RSVP link</span> Include if required, or note "Open to all, no RSVP needed"</li>
+        <li><span class="label">Flyer</span> Attach PNG + PDF</li>
       </ul>
     </div>
 
@@ -425,6 +462,28 @@
         <li><span class="label">Day-of intro</span> Kate or GA introduces the speaker using the ERC intro slide deck.</li>
         <li><span class="label">Honorarium</span> If applicable — process via Concur through Andy. Get speaker's TAMU UIN or direct deposit info. Allow 2–3 weeks processing.</li>
       </ul>
+
+      <p class="sub-title">Speaker Confirmation Email Template</p>
+      <div class="email-box">Subject: ERC <span class="placeholder">[EdTalk / In the Works]</span> — Confirming Your Talk on <span class="placeholder">[Date]</span>
+
+Hi <span class="placeholder">[First Name]</span>,
+
+We're excited to have you present at our upcoming <span class="placeholder">[EdTalk / In the Works]</span> on <span class="placeholder">[Date]</span> at <span class="placeholder">[Time]</span>. Here are the details:
+
+  Location: <span class="placeholder">[Room, Building]</span>
+  Zoom: <span class="placeholder">[link]</span> (ID: 372 839 5283 / PW: erc2026)
+  Parking: <span class="placeholder">[lot / garage info]</span>
+
+A few quick asks:
+  • Could you send a brief bio and headshot for our event materials?
+  • Please send your slides by <span class="placeholder">[2 days before]</span> so we can test AV ahead of time.
+
+We'll send a calendar invite shortly. Don't hesitate to reach out with any questions — I'm your day-of contact.
+
+Looking forward to it!
+<span class="placeholder">[Your Name]</span>
+Education Research Center, Texas A&amp;M University
+<span class="placeholder">[phone]</span></div>
     </div>
 
     <!-- 7. Signage & Check-in -->
