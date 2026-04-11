@@ -453,6 +453,7 @@ var EVENT_DATA = {
 // =============================================================
 var params  = new URLSearchParams(window.location.search);
 var eventId = params.get("id");
+var ev      = null;   // module-level — renderTasks() and renderProgress() reference this
 
 // ── Load event from live backend ─────────────────────────────
 post({ action: 'get_event_tasks', eventId: eventId })
@@ -463,7 +464,7 @@ post({ action: 'get_event_tasks', eventId: eventId })
     }
     var a = res.event;
     // Map API response to the shape renderEvent() expects
-    var ev = {
+    ev = {
       name:        a.name,
       type:        a.type,
       date:        a.date,           // "yyyy-MM-dd" — parseable by new Date()
