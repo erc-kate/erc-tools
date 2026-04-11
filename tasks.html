@@ -251,60 +251,15 @@
 
 <script>
 // ─────────────────────────────────────────────
-// MOCK DATA — replace with Apps Script fetch
+// DATA — loaded from Apps Script backend
 // ─────────────────────────────────────────────
 const TODAY = new Date();
 TODAY.setHours(0,0,0,0);
 
-function daysFromToday(n) {
-  const d = new Date(TODAY);
-  d.setDate(d.getDate() + n);
-  return d;
-}
-
-const EVENTS = [
-  { id: 'itw-2026-04-23', name: 'In the Works: Faculty Research', type: 'In the Works', eventDate: daysFromToday(13) },
-  { id: 'hh-2026-04-23',  name: 'Happy Hour',                     type: 'Happy Hour',   eventDate: daysFromToday(13) },
-  { id: 'edt-2026-05-06', name: 'EdTalk: Woltering',              type: 'EdTalk',        eventDate: daysFromToday(26) },
-];
-
-const TASKS = [
-  // ── In the Works ──────────────────────────────────────────────────
-  { eventId:'itw-2026-04-23', task:'Reserve room in MSC',              category:'logistics', assigned:'KB', dueDate:daysFromToday(-7), done:true,  completedBy:'KB', notes:'Book via the MSC reservation system. Confirm AV is included. <a href="manual.html#room">→ Manual: Reserve a Room</a>' },
-  { eventId:'itw-2026-04-23', task:'Send calendar invite to presenter', category:'logistics', assigned:'KB', dueDate:daysFromToday(0),  done:false, completedBy:'',  notes:'Use the standard ERC calendar invite template. CC Andy. <a href="manual.html#speaker">→ Manual: Speaker Coordination</a>' },
-  { eventId:'itw-2026-04-23', task:'Order catering',                    category:'food',      assigned:'AK', dueDate:daysFromToday(2),  done:false, completedBy:'',  notes:'Order through EZCater. Slack Andy first for 2FA. Confirm headcount before ordering. <a href="manual.html#catering">→ Manual: Food &amp; Catering</a>' },
-  { eventId:'itw-2026-04-23', task:'Design event flyer',                category:'promo',     assigned:'CM', dueDate:daysFromToday(3),  done:false, completedBy:'',  notes:'Use TAMU brand guidelines. Export as PNG and PDF. <a href="manual.html#marketing">→ Manual: Market the Event</a>' },
-  { eventId:'itw-2026-04-23', task:'Send ERC newsletter blurb',         category:'promo',     assigned:'KB', dueDate:daysFromToday(5),  done:false, completedBy:'',  notes:'Submit to newsletter list by Thursday noon for Friday send. <a href="manual.html#marketing">→ Manual: Market the Event</a>' },
-  { eventId:'itw-2026-04-23', task:'Submit to CEHD MarCom',             category:'promo',     assigned:'KB', dueDate:daysFromToday(5),  done:false, completedBy:'',  notes:'Use the CEHD event submission form. <a href="manual.html#marketing">→ Manual: Market the Event</a>' },
-  { eventId:'itw-2026-04-23', task:'Day-of setup and name tags',        category:'logistics', assigned:'KB', dueDate:daysFromToday(13), done:false, completedBy:'',  notes:'Name tags in the event bag. Arrive 30 min early. <a href="manual.html#checkin">→ Manual: Signage &amp; Check-in</a>' },
-  { eventId:'itw-2026-04-23', task:'Record attendance',                  category:'wrapup',    assigned:'KB', dueDate:daysFromToday(14), done:false, completedBy:'',  notes:'Enter actual attendance in the event-hub sheet. <a href="manual.html#postev">→ Manual: Post-Event</a>' },
-  { eventId:'itw-2026-04-23', task:'Send thank-you to presenter',        category:'wrapup',    assigned:'KB', dueDate:daysFromToday(15), done:false, completedBy:'',  notes:'Send within 2 days of the event. <a href="manual.html#postev">→ Manual: Post-Event</a>' },
-
-  // ── Happy Hour ─────────────────────────────────────────────────────
-  { eventId:'hh-2026-04-23',  task:'Reserve room',                      category:'logistics', assigned:'KB', dueDate:daysFromToday(1),  done:false, completedBy:'',  notes:'Casual space preferred — check Gilchrist first. <a href="manual.html#room">→ Manual: Reserve a Room</a>' },
-  { eventId:'hh-2026-04-23',  task:'Purchase appetizers',               category:'food',      assigned:'AK', dueDate:daysFromToday(4),  done:false, completedBy:'',  notes:'No formal headcount needed for Happy Hour. Budget ~$100. <a href="manual.html#catering">→ Manual: Food &amp; Catering</a>' },
-  { eventId:'hh-2026-04-23',  task:'Send ERC newsletter blurb',         category:'promo',     assigned:'KB', dueDate:daysFromToday(5),  done:false, completedBy:'',  notes:'Keep it casual — "stop by for snacks and conversation". <a href="manual.html#marketing">→ Manual: Market the Event</a>' },
-  { eventId:'hh-2026-04-23',  task:'Day-of reminder to team',           category:'logistics', assigned:'KB', dueDate:daysFromToday(13), done:false, completedBy:'',  notes:'Slack the team morning of. <a href="manual.html#checkin">→ Manual: Signage &amp; Check-in</a>' },
-  { eventId:'hh-2026-04-23',  task:'Record attendance',                  category:'wrapup',    assigned:'KB', dueDate:daysFromToday(14), done:false, completedBy:'',  notes:'Rough headcount is fine for Happy Hour. <a href="manual.html#postev">→ Manual: Post-Event</a>' },
-
-  // ── EdTalk: Woltering ──────────────────────────────────────────────
-  { eventId:'edt-2026-05-06', task:'Confirm speaker details',           category:'logistics', assigned:'KB', dueDate:daysFromToday(0),  done:false, completedBy:'',  notes:'Verify name, title, institution, talk title. Search online only — do not email the speaker. <a href="manual.html#speaker">→ Manual: Speaker Coordination</a>' },
-  { eventId:'edt-2026-05-06', task:'Create RSVP form',                  category:'logistics', assigned:'CM', dueDate:daysFromToday(3),  done:false, completedBy:'',  notes:'Copy the blank RSVP form. Share with Kate. Verify it works. <a href="manual.html#rsvp">→ Manual: RSVP Form</a>' },
-  { eventId:'edt-2026-05-06', task:'Design event flyer',                category:'promo',     assigned:'CM', dueDate:daysFromToday(5),  done:false, completedBy:'',  notes:'EdTalk style. Include speaker photo, talk title, date/time/location. <a href="manual.html#marketing">→ Manual: Market the Event</a>' },
-  { eventId:'edt-2026-05-06', task:'Send ERC newsletter blurb',         category:'promo',     assigned:'KB', dueDate:daysFromToday(7),  done:false, completedBy:'',  notes:'Include RSVP link once form is ready. <a href="manual.html#marketing">→ Manual: Market the Event</a>' },
-  { eventId:'edt-2026-05-06', task:'Submit to CEHD MarCom',             category:'promo',     assigned:'KB', dueDate:daysFromToday(7),  done:false, completedBy:'',  notes:'Use the CEHD event submission form. <a href="manual.html#marketing">→ Manual: Market the Event</a>' },
-  { eventId:'edt-2026-05-06', task:'Order catering',                    category:'food',      assigned:'AK', dueDate:daysFromToday(10), done:false, completedBy:'',  notes:'Confirm headcount from RSVP before ordering. EZCater preferred. <a href="manual.html#catering">→ Manual: Food &amp; Catering</a>' },
-  { eventId:'edt-2026-05-06', task:'Send speaker calendar invite',      category:'logistics', assigned:'KB', dueDate:daysFromToday(19), done:false, completedBy:'',  notes:'Send 1 week before. Use standard ERC template. <a href="manual.html#speaker">→ Manual: Speaker Coordination</a>' },
-  { eventId:'edt-2026-05-06', task:'Prep ERC intro slides',             category:'logistics', assigned:'KB', dueDate:daysFromToday(23), done:false, completedBy:'',  notes:'Update with current event details. Check transitions. <a href="manual.html#speaker">→ Manual: Speaker Coordination</a>' },
-  { eventId:'edt-2026-05-06', task:'Day-of setup and name tags',        category:'logistics', assigned:'KB', dueDate:daysFromToday(26), done:false, completedBy:'',  notes:'Name tags in the event bag. Arrive 30 min early. <a href="manual.html#checkin">→ Manual: Signage &amp; Check-in</a>' },
-  { eventId:'edt-2026-05-06', task:'Record attendance',                  category:'wrapup',    assigned:'KB', dueDate:daysFromToday(27), done:false, completedBy:'',  notes:'Enter actual attendance in the event-hub sheet. <a href="manual.html#postev">→ Manual: Post-Event</a>' },
-  { eventId:'edt-2026-05-06', task:'Send thank-you to speaker',         category:'wrapup',    assigned:'KB', dueDate:daysFromToday(28), done:false, completedBy:'',  notes:'Send within 2 days. Personal note preferred. <a href="manual.html#postev">→ Manual: Post-Event</a>' },
-];
-
 // ─────────────────────────────────────────────
 // STATE
 // ─────────────────────────────────────────────
-let tasks = TASKS.map((t, i) => ({ ...t, _id: i }));
+let tasks = [];
 let activeEvent  = 'all';
 let activePerson = 'all';
 let showDone     = false;
@@ -319,6 +274,73 @@ let showDone     = false;
   if (p.get('person')) activePerson = p.get('person');
   window._gaName     = p.get('name')     || '';
   window._gaInitials = p.get('initials') || '';
+})();
+
+// ─────────────────────────────────────────────
+// LOAD FROM BACKEND
+// ─────────────────────────────────────────────
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx_T8UyShcR4tTABICN8Z2U47XqC2IVT40h3EPG5-61MIwfOZXb0oHkXyQSZ_tq_V0X/exec';
+
+function post(payload) {
+  return fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
+    .then(function(r) { return r.json(); });
+}
+
+(function loadData() {
+  post({ action: 'get_all_tasks' })
+    .then(function(res) {
+      if (!res || !res.tasks) return;
+
+      // Populate tasks state — map API response to internal format
+      tasks = res.tasks.map(function(t, i) {
+        var d = t.dueDate ? new Date(t.dueDate) : null;
+        return {
+          _id:         i,
+          eventId:     t.eventId,
+          task:        t.task,
+          category:    t.category,
+          assigned:    t.initials,
+          dueDate:     d,
+          done:        t.done,
+          completedBy: t.done ? t.initials : '',
+          notes:       t.notes || '',
+        };
+      });
+
+      // Populate event filter options from API
+      if (res.events) {
+        res.events.forEach(function(ev) {
+          eventNames[ev.id] = ev.name;
+          var opt = document.createElement('option');
+          opt.value       = ev.id;
+          opt.textContent = ev.name;
+          document.getElementById('eventFilter').appendChild(opt);
+        });
+      }
+
+      // Apply URL param pre-filter
+      if (window._gaName || window._gaInitials) {
+        var banner = document.getElementById('gaBanner');
+        if (banner) {
+          banner.style.display = 'flex';
+          banner.classList.remove('hidden');
+          var nameText = window._gaName || 'Grad Ambassador';
+          document.getElementById('gaBannerText').textContent = 'Hi ' + nameText + '! Showing your tasks.';
+          if (window._gaInitials) {
+            document.getElementById('gaInitialsBadge').textContent = 'Your initials: ' + window._gaInitials;
+          }
+          window._autoInitials = window._gaInitials || '';
+        }
+      }
+
+      render();
+      buildEventFilters();
+    })
+    .catch(function() {
+      document.querySelector('.main').insertAdjacentHTML('afterbegin',
+        '<div style="color:#c00;padding:16px;font-size:14px;">Could not load tasks. Check your connection.</div>'
+      );
+    });
 })();
 
 // ─────────────────────────────────────────────
@@ -343,8 +365,10 @@ function catClass(cat) {
   return { logistics:'cat-logistics', promo:'cat-promo', food:'cat-food', wrapup:'cat-wrapup' }[cat] || '';
 }
 
+// eventNames is populated from the API response in loadData
+var eventNames = {};
 function eventName(id) {
-  return (EVENTS.find(e => e.id === id) || {}).name || id;
+  return eventNames[id] || id;
 }
 
 function getSection(task) {
@@ -380,7 +404,7 @@ function render() {
   `;
 
   document.getElementById('headerSub').textContent =
-    `${totalOpen} open tasks across ${EVENTS.length} events`;
+    `${totalOpen} open tasks across ${Object.keys(eventNames).length} events`;
 
   // Group
   const sections = { overdue: [], 'this-week': [], upcoming: [], done: [] };
@@ -517,11 +541,6 @@ function attachListeners() {
 // ─────────────────────────────────────────────
 function buildEventFilters() {
   const sel = document.getElementById('eventFilter');
-  EVENTS.forEach(ev => {
-    const opt = document.createElement('option');
-    opt.value = ev.id; opt.textContent = ev.name;
-    sel.appendChild(opt);
-  });
   sel.addEventListener('change', function() { activeEvent = this.value; render(); });
 
   // Sync person filter dropdown to URL param
@@ -540,31 +559,8 @@ document.getElementById('personFilter').addEventListener('change', function() {
 });
 
 // ─────────────────────────────────────────────
-// INIT
+// INIT — data loading and init are handled by loadData() above
 // ─────────────────────────────────────────────
-// ── GA identity setup ──────────────────────────────────────
-(function() {
-  var params = new URLSearchParams(window.location.search);
-  if (params.get('person') === 'GA') {
-    var name     = window._gaName     || 'Grad Ambassador';
-    var initials = window._gaInitials || 'GA';
-    var banner   = document.getElementById('gaBanner');
-    banner.classList.remove('hidden');
-    banner.style.display = 'flex';
-    document.getElementById('gaBannerText').textContent =
-      'Hi ' + name + '! Showing your tasks.';
-    if (window._gaInitials) {
-      document.getElementById('gaInitialsBadge').textContent =
-        'Your initials: ' + initials;
-    }
-    // Pre-fill initials in any mark-done inputs as they appear
-    // (handled in attachListeners below by defaulting the input value)
-    window._autoInitials = initials;
-  }
-})();
-
-buildEventFilters();
-render();
 </script>
 </body>
 </html>

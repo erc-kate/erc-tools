@@ -385,57 +385,24 @@
 </main>
 
 <script>
-// =============================================================
-// EVENT DATA
-// Pulled from the current working spreadsheet.
-// Will be replaced with Apps Script API calls once wired up.
-// =============================================================
-const EVENTS = [
-  {
-    id: "itw-faculty-research-2026",
-    name: "In the Works: Faculty Research",
-    type: "In the Works",
-    badgeClass: "badge-itw",
-    date: "2026-04-23",
-    time: "12:00 PM",
-    location: "TBD",
-    totalTasks: 22,
-    completedTasks: 0,
-    hasFood: true,
-    hasZoom: false,
-  },
-  {
-    id: "happy-hour-spring-2026",
-    name: "ERC Happy Hour",
-    type: "Happy Hour",
-    badgeClass: "badge-happyhour",
-    date: "2026-04-23",
-    time: "5:00 PM",
-    location: "TBD",
-    totalTasks: 18,
-    completedTasks: 0,
-    hasFood: true,
-    hasZoom: false,
-  },
-  {
-    id: "edtalk-woltering-2026",
-    name: "EdTalk: Steven Woltering",
-    type: "EdTalk",
-    badgeClass: "badge-edtalk",
-    date: "2026-05-06",
-    time: "12:00 PM",
-    location: "TBD",
-    totalTasks: 20,
-    completedTasks: 0,
-    hasFood: true,
-    hasZoom: false,
-  },
-];
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx_T8UyShcR4tTABICN8Z2U47XqC2IVT40h3EPG5-61MIwfOZXb0oHkXyQSZ_tq_V0X/exec';
+
+function post(payload) {
+  return fetch(APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
+    .then(function(r) { return r.json(); });
+}
+
+function badgeClass(type) {
+  if (type === 'EdTalk')     return 'badge-edtalk';
+  if (type === 'Happy Hour') return 'badge-happyhour';
+  if (type === 'Internal')   return 'badge-itw';
+  return 'badge-internal';
+}
 
 // =============================================================
 // WEEK BAR
 // =============================================================
-function buildWeekBar() {
+function buildWeekBar(events) {
   const bar = document.getElementById("weekBar");
   const today = new Date();
   const dayOfWeek = today.getDay();
@@ -452,7 +419,7 @@ function buildWeekBar() {
     const isToday = dateStr === today.toISOString().split("T")[0];
 
     // Check if any event falls on this day
-    const dayEvents = EVENTS.filter(function(e) { return e.date === dateStr; });
+    const dayEvents = events.filter(function(e) { return e.date === dateStr; });
     const hasEvent = dayEvents.length > 0;
 
     const el = document.createElement("div");
@@ -475,12 +442,12 @@ function buildWeekBar() {
 // =============================================================
 // EVENT CARDS
 // =============================================================
-function buildEventCards() {
+function buildEventCards(events) {
   const grid = document.getElementById("eventGrid");
   const today = new Date();
 
   // Sort by date ascending
-  const sorted = EVENTS.slice().sort(function(a, b) {
+  const sorted = events.slice().sort(function(a, b) {
     return new Date(a.date) - new Date(b.date);
   });
 
@@ -517,7 +484,7 @@ function buildEventCards() {
     card.innerHTML =
       '<div class="event-card-top">' +
         '<div class="event-name">' + ev.name + pill + '</div>' +
-        '<span class="event-type-badge ' + ev.badgeClass + '">' + ev.type + '</span>' +
+        '<span class="event-type-badge ' + badgeClass(ev.type) + '">' + ev.type + '</span>' +
       '</div>' +
       '<div class="event-meta">' +
         '<span>' + dateFormatted + (ev.time ? " &middot; " + ev.time : "") + '</span>' +
@@ -536,8 +503,19 @@ function buildEventCards() {
 // =============================================================
 // INIT
 // =============================================================
-buildWeekBar();
-buildEventCards();
+// Show loading state on event grid
+document.getElementById('eventGrid').innerHTML = '<div style="color:#bbb;font-size:14px;padding:20px;">Loading events...</div>';
+document.getElementById('eventCount').textContent = '';
+
+post({ action: 'get_upcoming_events' })
+  .then(function(res) {
+    var events = (res && res.events) ? res.events : [];
+    buildWeekBar(events);
+    buildEventCards(events);
+  })
+  .catch(function() {
+    document.getElementById('eventGrid').innerHTML = '<div style="color:#c00;font-size:14px;padding:20px;">Could not load events. Check your connection.</div>';
+  });
 
 // =============================================================
 // PAST EVENTS
@@ -550,19 +528,14 @@ function buildPastEvents() {
     archived = JSON.parse(localStorage.getItem('erc_archived_events') || '[]');
   } catch(e) { archived = []; }
 
-  // Also check if any EVENTS in the mock data have been archived
-  var mockArchived = EVENTS.filter(function(ev) {
-    return archived.indexOf(ev.id) !== -1;
-  });
-
-  if (mockArchived.length === 0 && archived.length === 0) return;
+  if (archived.length === 0) return;
 
   var section = document.getElementById('pastEventsSection');
   var list    = document.getElementById('pastEventsList');
   section.classList.remove('hidden');
 
   archived.forEach(function(id) {
-    var ev = EVENTS.find(function(e) { return e.id === id; }) || { id: id, name: id, date: '', type: '' };
+    var ev = { id: id, name: id, date: '', type: '' };
     var item = document.createElement('a');
     item.className = 'past-event-item';
     item.href = 'event.html?id=' + ev.id;
