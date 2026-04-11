@@ -191,6 +191,29 @@
         <button class="approve-btn" id="approveBtn">Approve &amp; Generate Tasks</button>
         <span class="approve-msg" id="approveMsg"></span>
       </div>
+
+      <div style="margin-top:20px;padding-top:18px;border-top:1px solid #f0f0f0;">
+        <p style="font-size:0.78rem;font-weight:700;text-transform:uppercase;
+                  letter-spacing:0.05em;color:#888;margin-bottom:8px;">Send Back</p>
+        <p style="font-size:0.82rem;color:#999;margin-bottom:10px;line-height:1.5;">
+          Not ready to approve? Add a note and send it back for revision.
+        </p>
+        <textarea id="sendBackNote" rows="3"
+          placeholder="Optional: explain what needs to change…"
+          style="width:100%;font-family:inherit;font-size:0.875rem;padding:9px 11px;
+                 border:1px solid #ccc;border-radius:6px;resize:vertical;
+                 outline:none;color:#1a1a1a;margin-bottom:10px;"
+          onfocus="this.style.borderColor='#500000'"
+          onblur="this.style.borderColor='#ccc'"></textarea>
+        <button id="sendBackBtn"
+          style="font-family:inherit;font-size:0.85rem;font-weight:700;
+                 padding:8px 20px;border-radius:6px;cursor:pointer;
+                 border:1.5px solid #ccc;background:#fff;color:#555;
+                 transition:all 0.15s;">
+          ↩ Send Back
+        </button>
+        <span id="sendBackMsg" style="font-size:0.82rem;color:#888;margin-left:12px;"></span>
+      </div>
     </div>
 
   </div>
@@ -216,6 +239,21 @@
     <div class="modal-field">
       <label>Grad Ambassador (GA) <span style="font-weight:400;color:#bbb;font-size:0.7rem;">optional</span></label>
       <input type="email" id="emailGA" placeholder="gradambassador@tamu.edu" autocomplete="off">
+    </div>
+    <div class="modal-field" style="display:grid;grid-template-columns:1fr 80px;gap:10px;">
+      <div>
+        <label>GA First Name <span style="font-weight:400;color:#bbb;font-size:0.7rem;">optional</span></label>
+        <input type="text" id="gaName" placeholder="e.g. Jane" autocomplete="off"
+               style="width:100%;font-family:inherit;font-size:0.9rem;color:#1a1a1a;
+                      padding:8px 10px;border:1px solid #ccc;border-radius:5px;outline:none;">
+      </div>
+      <div>
+        <label>Initials</label>
+        <input type="text" id="gaInitials" placeholder="JD" maxlength="3" autocomplete="off"
+               style="width:100%;font-family:inherit;font-size:0.9rem;color:#1a1a1a;
+                      padding:8px 10px;border:1px solid #ccc;border-radius:5px;outline:none;
+                      text-transform:uppercase;">
+      </div>
     </div>
     <div class="modal-actions">
       <button class="modal-send-btn" id="modalSendBtn">Send &amp; Generate Tasks</button>
@@ -403,11 +441,42 @@ document.getElementById("modalCancelBtn").addEventListener("click", function() {
   document.getElementById("emailModal").classList.add("hidden");
 });
 
+// ── Send Back ─────────────────────────────────────────────────
+document.getElementById("sendBackBtn").addEventListener("click", function() {
+  var note = document.getElementById("sendBackNote").value.trim();
+  var btn  = this;
+  var msg  = document.getElementById("sendBackMsg");
+  btn.disabled = true;
+  btn.textContent = "Sending…";
+
+  post({
+    action:  "reject_event",
+    eventId: eventId,
+    note:    note,
+  })
+  .then(function(res) {
+    if (res.error) throw new Error(res.error);
+    msg.textContent = "Sent back for revision.";
+    msg.style.color = "#1a6b3c";
+    document.getElementById("approveBtn").disabled = true;
+    btn.disabled = true;
+    btn.textContent = "↩ Sent";
+  })
+  .catch(function(err) {
+    msg.textContent = "Error: " + err.message;
+    msg.style.color = "#a00";
+    btn.disabled = false;
+    btn.textContent = "↩ Send Back";
+  });
+});
+
 // ── Modal: send & generate ────────────────────────────────────
 document.getElementById("modalSendBtn").addEventListener("click", function() {
   var emailKB = document.getElementById("emailKB").value.trim();
   var emailAK = document.getElementById("emailAK").value.trim();
-  var emailGA = document.getElementById("emailGA").value.trim();
+  var emailGA       = document.getElementById("emailGA").value.trim();
+  var gaName        = document.getElementById("gaName").value.trim();
+  var gaInitials    = document.getElementById("gaInitials").value.trim().toUpperCase();
 
   // Emails are optional — skip sending to any blank address
 
@@ -422,7 +491,7 @@ document.getElementById("modalSendBtn").addEventListener("click", function() {
     action:        "approve",
     eventId:       eventId,
     approvedTasks: approved,
-    emails: { KB: emailKB, AK: emailAK, GA: emailGA },
+    emails: { KB: emailKB, AK: emailAK, GA: emailGA, GA_name: gaName, GA_initials: gaInitials },
   })
   .then(function(res) {
     if (res.error) throw new Error(res.error);

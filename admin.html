@@ -337,6 +337,59 @@
 </head>
 <body>
 
+<!-- ── Password Gate ──────────────────────────────────────── -->
+<div id="passwordGate" style="
+  position:fixed;inset:0;background:#f5f5f5;z-index:9999;
+  display:flex;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border-radius:10px;padding:36px 32px;
+       max-width:360px;width:100%;border:1px solid #e0e0e0;text-align:center;
+       box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+    <div style="font-size:1.5rem;margin-bottom:8px;">🔒</div>
+    <h2 style="font-family:'Work Sans',sans-serif;font-size:1.15rem;
+               font-weight:700;color:#500000;margin-bottom:6px;">Admin Access</h2>
+    <p style="font-size:0.85rem;color:#888;margin-bottom:20px;line-height:1.5;">
+      This page is for ERC staff only.
+    </p>
+    <input type="password" id="adminPwInput" placeholder="Password"
+           style="width:100%;padding:10px 12px;border:1px solid #ccc;
+                  border-radius:6px;font-size:0.9rem;margin-bottom:10px;
+                  outline:none;font-family:inherit;"
+           autofocus>
+    <button onclick="checkAdminPassword()"
+            style="width:100%;background:#500000;color:#fff;border:none;
+                   border-radius:6px;padding:11px;font-weight:700;cursor:pointer;
+                   font-family:inherit;font-size:0.9rem;transition:background 0.15s;">
+      Enter
+    </button>
+    <p id="pwError" style="color:#a00;font-size:0.82rem;margin-top:10px;display:none;">
+      Incorrect password. Try again.
+    </p>
+  </div>
+</div>
+<script>
+(function() {
+  function checkAdminPassword() {
+    if (document.getElementById('adminPwInput').value === 'greg') {
+      document.getElementById('passwordGate').style.display = 'none';
+      sessionStorage.setItem('erc_admin_auth', '1');
+    } else {
+      document.getElementById('pwError').style.display = 'block';
+      document.getElementById('adminPwInput').select();
+    }
+  }
+  window.checkAdminPassword = checkAdminPassword;
+  document.addEventListener('DOMContentLoaded', function() {
+    var inp = document.getElementById('adminPwInput');
+    if (inp) inp.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') checkAdminPassword();
+    });
+    if (sessionStorage.getItem('erc_admin_auth') === '1') {
+      document.getElementById('passwordGate').style.display = 'none';
+    }
+  });
+})();
+</script>
+
 <!-- Header -->
 <header class="page-header">
   <a href="index.html" class="back-link">&larr; Event Hub</a>

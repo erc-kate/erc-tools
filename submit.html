@@ -572,8 +572,15 @@ document.getElementById("submitForm").addEventListener("submit", function(e) {
   .then(function(r) { return r.json(); })
   .then(function(data) {
     if (data.success) {
-      showStatus("Event submitted! You'll receive a confirmation shortly.", "success");
-      resetForm();
+      document.getElementById('submitForm').classList.add('hidden');
+      var el = document.getElementById('statusMsg');
+      el.innerHTML = '✅ <strong>Event submitted!</strong> Andy will review it and you\'ll get a confirmation email once it\'s approved.<br><br>' +
+        '<a href="index.html" style="color:#1a6b3c;font-weight:600;">← Back to Hub</a>' +
+        '&nbsp;&nbsp;&nbsp;' +
+        '<a href="javascript:location.reload()" style="color:#888;">Submit another event</a>';
+      el.className = 'status-msg success';
+      el.style.display = 'block';
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     } else {
       showStatus("Submission failed: " + (data.error || "Unknown error"), "error");
     }

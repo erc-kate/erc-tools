@@ -255,6 +255,8 @@
         <div class="header-progress" id="headerProgress"></div>
       </div>
       <button class="edit-page-btn" id="editPageBtn">Edit Page</button>
+      <a id="viewTasksBtn" href="#" class="edit-page-btn" style="text-decoration:none;">&#9745; Tasks</a>
+      <button class="edit-page-btn" id="archiveBtn" title="Mark this event as complete and archive it">&#10003; Complete</button>
     </div>
   </div>
 </header>
@@ -456,6 +458,8 @@ if (!ev) {
   document.getElementById("eventTitle").textContent = "Event not found";
 } else {
   renderEvent(ev);
+  // Wire "View Tasks" link to filter tasks.html by this event
+  document.getElementById('viewTasksBtn').href = 'tasks.html?event=' + encodeURIComponent(eventId);
 }
 
 // =============================================================
@@ -942,6 +946,54 @@ function renderProgress() {
     '<div class="header-progress-bar"><div class="header-progress-fill" style="width:' + pct + '%"></div></div>' +
     '<span class="header-progress-text">' + pct + '% &middot; ' + done + ' / ' + tot + ' tasks</span>';
 }
+
+// =============================================================
+// HELPERS
+// =============================================================
+function post(payload) {
+  return fetch(APPS_SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }).then(function(r) { return r.json(); });
+}
+
+// ── Archive / Mark Complete ──────────────────────────────────
+document.getElementById('archiveBtn').addEventListener('click', function() {
+  var eventName = document.title.replace(' \u2014 ERC Event Hub', '') || 'this event';
+  if (!confirm('Mark "' + eventName + '" as complete?\n\nIt will be moved to Past Events on the hub.')) return;
+  var btn = this;
+  btn.disabled = true;
+  btn.textContent = 'Saving\u2026';
+
+  post({
+    action:  'update_event',
+    eventId: eventId,
+    fields:  { status: 'Completed' },
+  })
+  .then(function(res) {
+    if (res.error) throw new Error(res.error);
+    // Save to localStorage so index.html can show past events
+    try {
+      var archived = JSON.parse(localStorage.getItem('erc_archived_events') || '[]');
+      if (archived.indexOf(eventId) === -1) archived.push(eventId);
+      localStorage.setItem('erc_archived_events', JSON.stringify(archived));
+    } catch(e) {}
+    btn.textContent = '\u2713 Archived';
+    btn.style.background = 'rgba(255,255,255,0.15)';
+    var sub = document.querySelector('.event-header-meta');
+    if (sub) {
+      var chip = document.createElement('span');
+      chip.textContent = 'Archived';
+      chip.style.cssText = 'font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:3px;background:rgba(255,255,255,0.2);color:#fff;margin-left:8px;';
+      sub.appendChild(chip);
+    }
+  })
+  .catch(function(err) {
+    alert('Error: ' + err.message);
+    btn.disabled = false;
+    btn.textContent = '\u2713 Complete';
+  });
+});
 </script>
 </body>
 </html>
