@@ -475,6 +475,7 @@ post({ action: 'get_event_tasks', eventId: eventId })
       description: a.description,
       rsvpLink:    a.rsvpLink,
       flyerLink:   a.flyerLink,
+      flyerLink2:  a.flyerLink2 || '',
       blurb:       a.blurb,
       speakers:    [],
       promoLog:    [],
@@ -552,6 +553,7 @@ function renderEvent(ev) {
   var linkDefs = [];
   if (hasRsvp) linkDefs.push({ label: "RSVP Form", urlKey: "rsvpLink", key: "rsvp" });
   linkDefs.push({ label: "Flyer / Graphic", urlKey: "flyerLink", key: "flyer" });
+  linkDefs.push({ label: "Flyer / Graphic 2", urlKey: "flyerLink2", key: "flyer2" });
 
   linkDefs.forEach(function(ld) {
     var url = ev[ld.urlKey] || "";
