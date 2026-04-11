@@ -294,7 +294,7 @@
 
       <!-- Misc warning -->
       <div class="misc-warning hidden" id="miscWarning">
-        ⚠️ Miscellaneous events don't have a standard task list. You'll build the task list manually after submitting.
+        Miscellaneous events don't have a standard task list. You'll build the task list manually after submitting.
       </div>
 
     </div>
@@ -575,8 +575,7 @@ document.getElementById("submitForm").addEventListener("submit", function(e) {
       document.getElementById('submitForm').classList.add('hidden');
       var el = document.getElementById('statusMsg');
       el.innerHTML =
-        '<div style="font-size:1.25rem;font-weight:700;margin-bottom:8px;">✅ Event Submitted!</div>' +
-        '<div style="color:#444;margin-bottom:16px;">Andy will review it and you\'ll get a confirmation email once it\'s approved.</div>' +
+        '<div style="font-size:1.25rem;font-weight:700;margin-bottom:16px;">Event Submitted!</div>' +
         '<a href="index.html" style="color:#1a6b3c;font-weight:600;">← Back to Hub</a>' +
         '&nbsp;&nbsp;&nbsp;' +
         '<a href="javascript:location.reload()" style="color:#888;">Submit another event</a>';
