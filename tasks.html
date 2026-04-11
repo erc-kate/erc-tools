@@ -289,7 +289,12 @@ function post(payload) {
 (function loadData() {
   post({ action: 'get_all_tasks' })
     .then(function(res) {
-      if (!res || !res.tasks) return;
+      if (!res || !res.tasks) {
+        document.getElementById('headerSub').textContent = 'No tasks found.';
+        render();
+        buildEventFilters();
+        return;
+      }
 
       // Populate tasks state — map API response to internal format
       tasks = res.tasks.map(function(t, i) {

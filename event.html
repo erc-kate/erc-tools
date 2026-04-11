@@ -302,7 +302,7 @@
 // =============================================================
 // CONFIG — replace with live Apps Script URL once deployed
 // =============================================================
-var APPS_SCRIPT_URL = "https://script.google.com/macros/s/YOUR_DEPLOY_ID/exec";
+var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_T8UyShcR4tTABICN8Z2U47XqC2IVT40h3EPG5-61MIwfOZXb0oHkXyQSZ_tq_V0X/exec";
 
 var TEAM_INITIALS = ["KB", "CM", "AK", "GA"];
 
@@ -453,15 +453,48 @@ var EVENT_DATA = {
 // =============================================================
 var params  = new URLSearchParams(window.location.search);
 var eventId = params.get("id");
-var ev      = EVENT_DATA[eventId];
 
-if (!ev) {
-  document.getElementById("eventTitle").textContent = "Event not found";
-} else {
-  renderEvent(ev);
-  // Wire "View Tasks" link to filter tasks.html by this event
-  document.getElementById('viewTasksBtn').href = 'tasks.html?event=' + encodeURIComponent(eventId);
-}
+// ── Load event from live backend ─────────────────────────────
+post({ action: 'get_event_tasks', eventId: eventId })
+  .then(function(res) {
+    if (!res || res.error || !res.event) {
+      document.getElementById("eventTitle").textContent = "Event not found";
+      return;
+    }
+    var a = res.event;
+    // Map API response to the shape renderEvent() expects
+    var ev = {
+      name:        a.name,
+      type:        a.type,
+      date:        a.date,           // "yyyy-MM-dd" — parseable by new Date()
+      time:        a.time,
+      location:    a.location,
+      hasFood:     a.hasFood,
+      hasZoom:     a.hasZoom,
+      description: a.description,
+      rsvpLink:    a.rsvpLink,
+      flyerLink:   a.flyerLink,
+      blurb:       a.blurb,
+      speakers:    [],
+      promoLog:    [],
+      tasks: (res.tasks || []).map(function(t) {
+        return {
+          task:     t.task,
+          category: t.category,
+          initials: t.initials,
+          dueDate:  t.dueDate,
+          done:     t.status === 'Complete',
+          note:     t.note || '',
+        };
+      }),
+    };
+    renderEvent(ev);
+    document.getElementById('viewTasksBtn').href =
+      'tasks.html?event=' + encodeURIComponent(eventId);
+  })
+  .catch(function() {
+    document.getElementById("eventTitle").textContent = "Could not load event";
+  });
 
 // =============================================================
 // RENDER
