@@ -569,12 +569,14 @@ function renderSidebar() {
 
     var dateStr = formatDateShort(ev.date || ev.eventDate);
 
+    var submittedStr = ev.submittedOn ? formatDateShort(ev.submittedOn) : '';
     item.innerHTML =
       '<div class="event-item-name">' + esc(ev.name || ev.eventName) + '</div>' +
       '<div class="event-item-meta">' +
         (ev.type || ev.eventType ? '<span class="event-item-type">' + esc(ev.type || ev.eventType) + '</span>' : '') +
         '<span>' + esc(dateStr) + '</span>' +
-      '</div>';
+      '</div>' +
+      (submittedStr ? '<div style="font-size:11px;color:#aaa;margin-top:3px;">Submitted ' + esc(submittedStr) + '</div>' : '');
 
     item.addEventListener("click", function() { selectEvent(evId); });
     inner.appendChild(item);
@@ -650,6 +652,7 @@ function renderPendingDetail() {
   var summaryCard = document.createElement("div");
   summaryCard.className = "card";
   var dateStr = formatDateLong(ev.date || ev.eventDate);
+  var submittedOnStr = ev.submittedOn ? formatDateShort(ev.submittedOn) : '';
   summaryCard.innerHTML =
     '<div class="card-title">Event Details</div>' +
     '<div class="detail-event-name">' + esc(ev.name || ev.eventName) + '</div>' +
@@ -658,7 +661,8 @@ function renderPendingDetail() {
       '<span class="chip">' + esc(dateStr) + '</span>' +
       (ev.time     ? '<span class="chip">' + esc(ev.time) + '</span>' : '') +
       (ev.location ? '<span class="chip">' + esc(ev.location) + '</span>' : '') +
-    '</div>';
+    '</div>' +
+    (submittedOnStr ? '<div style="font-size:12px;color:#999;margin-top:8px;">Submitted ' + esc(submittedOnStr) + '</div>' : '');
   container.appendChild(summaryCard);
 
   // Tasks card

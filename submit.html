@@ -574,7 +574,9 @@ document.getElementById("submitForm").addEventListener("submit", function(e) {
     if (data.success) {
       document.getElementById('submitForm').classList.add('hidden');
       var el = document.getElementById('statusMsg');
-      el.innerHTML = '✅ <strong>Event submitted!</strong> Andy will review it and you\'ll get a confirmation email once it\'s approved.<br><br>' +
+      el.innerHTML =
+        '<div style="font-size:1.25rem;font-weight:700;margin-bottom:8px;">✅ Event Submitted!</div>' +
+        '<div style="color:#444;margin-bottom:16px;">Andy will review it and you\'ll get a confirmation email once it\'s approved.</div>' +
         '<a href="index.html" style="color:#1a6b3c;font-weight:600;">← Back to Hub</a>' +
         '&nbsp;&nbsp;&nbsp;' +
         '<a href="javascript:location.reload()" style="color:#888;">Submit another event</a>';
