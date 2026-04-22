@@ -212,7 +212,6 @@ document.getElementById('signup-form').addEventListener('submit', async function
   try {
     const res = await fetch(WEBHOOK_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'listserv_signup', name, email, date_subscribed, time })
     });
 
