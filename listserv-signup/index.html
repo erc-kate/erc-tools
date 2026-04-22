@@ -145,7 +145,7 @@
 
     <!-- Form state -->
     <div class="signup-card-body" id="form-body">
-      <form id="signup-form" autocomplete="off" novalidate>
+      <form id="signup-form" autocomplete="off">
 
         <div class="field-group">
           <label class="field-label" for="field-name">Name</label>
@@ -216,7 +216,8 @@ document.getElementById('signup-form').addEventListener('submit', async function
       body: JSON.stringify({ action: 'listserv_signup', name, email, date_subscribed, time })
     });
 
-    if (!res.ok) throw new Error('Non-OK response');
+    const data = await res.json();
+    if (!res.ok || data.status !== 'ok') throw new Error('Webhook error');
 
     // Show success state
     document.getElementById('form-body').style.display    = 'none';
