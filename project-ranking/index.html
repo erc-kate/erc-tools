@@ -253,8 +253,11 @@
 
   <img src="form-header.png" alt="ERC Graduate Research Program" style="width:100%;max-width:680px;margin-bottom:14px;display:block;"/>
 
-  <p style="width:100%;max-width:680px;margin:0 0 20px 0;font-size:0.95rem;color:#707070;text-align:left;">
+  <p style="width:100%;max-width:680px;margin:0 0 10px 0;font-size:0.95rem;color:#707070;text-align:left;">
     Click <a href="faculty-presentations.pdf" target="_blank" rel="noopener" style="color:#500000;font-weight:600;text-decoration:underline;">here</a> to view all of the slides the faculty presented.
+  </p>
+  <p style="width:100%;max-width:680px;margin:0 0 20px 0;font-size:0.95rem;color:#707070;text-align:left;">
+    Rankings are due by <strong style="color:#FF0000;">5:00 PM</strong> on <strong style="color:#FF0000;">Monday, April 27th</strong>.
   </p>
 
   <div class="signup-card">
@@ -312,10 +315,23 @@
       <p>Your project ranking has been recorded. We will be in touch soon!</p>
     </div>
 
+    <!-- Closed state -->
+    <div class="success-body" id="closed-body">
+      <div class="success-title">This form is now closed.</div>
+      <p>The deadline for submitting rankings was 5:00 PM on Monday, April 27th. If you still need to submit, please reach out to the ERC team directly.</p>
+    </div>
+
   </div>
 
 <script>
 const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbzvpY_VklcS93dhn7isJAF4aOkT6dvOfnuKWp2iZIh3P9ajQglFcEJ-a_dHjskY2Fg5oA/exec';
+
+// Form closes at midnight at the end of Monday, April 27, 2026 (i.e. 00:00 on Tuesday April 28)
+const CLOSE_TIME = new Date(2026, 3, 28, 0, 0, 0); // month is 0-indexed: 3 = April
+if (new Date() >= CLOSE_TIME) {
+  document.getElementById('form-body').style.display = 'none';
+  document.getElementById('closed-body').style.display = 'block';
+}
 
 const PROJECTS = [
   { id: 'kwok_m',       author: 'M. Kwok',       title: 'Using Linguistics-Informed Strategies to Teach Math Word Problems' },
@@ -329,6 +345,7 @@ const PROJECTS = [
   { id: 'pikus',        author: 'Pikus',         title: 'Family Home STEM Practices' },
   { id: 'thompson',     author: 'Thompson',      title: '(Project 1) Relational Health in Rural Early Childhood Settings: Advancing a Coaching Tool Through Qualitative Inquiry (Project 2) TEXCS and PlayBots' },
   { id: 'gagne',        author: 'Gagne',         title: 'Sketch-Based Assessments for Early Childhood Development: Multidisciplinary Planning Toward an NSF Center-Scale Proposal' },
+  { id: 'han',          author: 'Han',           title: 'Does Sharing of Cafeteria Cut Costs? Evidence from New York City Public Schools' },
 ];
 
 const listEl = document.getElementById('rank-list');
@@ -423,6 +440,13 @@ notesEl.addEventListener('input', () => {
 // Submit
 document.getElementById('ranking-form').addEventListener('submit', async function (e) {
   e.preventDefault();
+
+  // Reject submissions after the close time (in case form was opened before close)
+  if (new Date() >= CLOSE_TIME) {
+    document.getElementById('form-body').style.display = 'none';
+    document.getElementById('closed-body').style.display = 'block';
+    return;
+  }
 
   const name = document.getElementById('field-name').value.trim();
   const email = document.getElementById('field-email').value.trim();
