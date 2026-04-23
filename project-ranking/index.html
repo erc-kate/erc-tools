@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>ERC Project Ranking</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet"/>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      font-family: 'Open Sans', sans-serif;
+      background: #fff;
+      color: #666;
+      font-size: 14px;
+      line-height: 1.7;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 20px;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Work Sans', sans-serif;
+      color: #333;
+      line-height: 1.3;
+    }
+
+    /* ── Card ─────────────────────────────────────── */
+    .signup-card {
+      width: 100%;
+      max-width: 680px;
+      border: 1px solid #e2e2e2;
+      border-radius: 6px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .signup-card-header {
+      background: #f6f6f6;
+      padding: 18px 24px;
+    }
+    .signup-card-header h1 {
+      color: #500000;
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin: 0;
+    }
+    .signup-card-body {
+      padding: 24px;
+    }
+
+    /* ── Form fields ──────────────────────────────── */
+    .field-label {
+      font-family: 'Work Sans', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #707070;
+      display: block;
+      margin-bottom: 7px;
+    }
+    .field-hint {
+      font-size: 0.95rem;
+      color: #707070;
+      margin-bottom: 10px;
+    }
+    .field-input, .field-textarea {
+      font-family: 'Open Sans', sans-serif;
+      font-size: 0.95rem;
+      color: #707070;
+      width: 100%;
+      border: 1px solid #e2e2e2;
+      border-radius: 4px;
+      padding: 10px 12px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .field-textarea {
+      resize: vertical;
+      min-height: 70px;
+      font-family: 'Open Sans', sans-serif;
+    }
+    .field-input:focus, .field-textarea:focus {
+      border-color: #500000;
+      box-shadow: 0 0 0 3px rgba(80,0,0,0.08);
+    }
+    .field-group {
+      margin-bottom: 22px;
+    }
+
+    /* ── Radio (departments) ──────────────────────── */
+    .radio-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 7px;
+      font-size: 0.95rem;
+      color: #707070;
+      cursor: pointer;
+    }
+    .radio-option input[type="radio"] {
+      accent-color: #500000;
+      margin-top: 4px;
+    }
+    .other-input {
+      margin-top: 6px;
+      margin-left: 26px;
+      max-width: 360px;
+    }
+
+    /* ── Character counter ────────────────────────── */
+    .char-counter {
+      font-size: 0.75rem;
+      color: #999;
+      text-align: right;
+      margin-top: 4px;
+    }
+
+    /* ── Ranking list ─────────────────────────────── */
+    .rank-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      border: 1px solid #e2e2e2;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .rank-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      background: #fff;
+      border-bottom: 1px solid #eee;
+      cursor: grab;
+      user-select: none;
+      transition: background 0.12s;
+    }
+    .rank-item:last-child { border-bottom: none; }
+    .rank-item:hover { background: #fafafa; }
+    .rank-item.dragging {
+      opacity: 0.5;
+      background: #f5ecec;
+    }
+    .rank-item.drag-over {
+      border-top: 2px solid #500000;
+    }
+    .rank-num {
+      font-family: 'Work Sans', sans-serif;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #500000;
+      min-width: 26px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .rank-handle {
+      color: #bbb;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .rank-text {
+      flex: 1;
+      font-size: 0.95rem;
+      color: #707070;
+      line-height: 1.5;
+    }
+    .rank-text strong {
+      color: #707070;
+    }
+    .rank-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+    .rank-btn {
+      background: none;
+      border: none;
+      color: #999;
+      width: 22px;
+      height: 18px;
+      cursor: pointer;
+      font-family: 'Arial', sans-serif;
+      font-size: 0.85rem;
+      line-height: 1;
+      padding: 0;
+      transition: color 0.12s;
+    }
+    .rank-btn:hover:not(:disabled) {
+      color: #500000;
+    }
+    .rank-btn:disabled {
+      opacity: 0.25;
+      cursor: not-allowed;
+    }
+
+    /* ── Submit button ────────────────────────────── */
+    .btn-submit {
+      font-family: 'Work Sans', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 600;
+      background: #500000;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 10px 24px;
+      cursor: pointer;
+      transition: background 0.15s;
+      margin-top: 4px;
+    }
+    .btn-submit:hover:not(:disabled) { background: #3a0000; }
+    .btn-submit:disabled {
+      background: #999;
+      cursor: not-allowed;
+    }
+
+    /* ── Error / success ──────────────────────────── */
+    .error-msg {
+      font-size: 0.82rem;
+      color: #c0392b;
+      margin-top: 10px;
+      display: none;
+    }
+    .success-body {
+      display: none;
+      padding: 24px;
+    }
+    .success-title {
+      font-family: 'Work Sans', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .success-body p {
+      font-size: 0.875rem;
+      color: #555;
+      line-height: 1.7;
+      margin: 0;
+    }
+    .success-body a { color: #500000; }
+    .success-body a:hover { color: #3a0000; }
+
+    .required-star { color: #c0392b; margin-left: 3px; }
+  </style>
+</head>
+<body>
+
+  <img src="form-header.png" alt="ERC Graduate Research Program" style="width:100%;max-width:680px;margin-bottom:20px;display:block;"/>
+
+  <div class="signup-card">
+
+    <div class="signup-card-header">
+      <h1>Project Ranking Form</h1>
+    </div>
+
+    <!-- Form state -->
+    <div class="signup-card-body" id="form-body">
+      <form id="ranking-form" autocomplete="off">
+
+        <div class="field-group">
+          <label class="field-label" for="field-name">Name<span class="required-star">*</span></label>
+          <input class="field-input" type="text" id="field-name" name="name" autocomplete="off" required/>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="field-email">Email Address<span class="required-star">*</span></label>
+          <input class="field-input" type="email" id="field-email" name="email" autocomplete="off" required/>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Department<span class="required-star">*</span></label>
+          <label class="radio-option"><input type="radio" name="department" value="Educational Administration and Human Resource Development" required/>Educational Administration and Human Resource Development</label>
+          <label class="radio-option"><input type="radio" name="department" value="Educational Psychology"/>Educational Psychology</label>
+          <label class="radio-option"><input type="radio" name="department" value="Public Service and Administration"/>Public Service and Administration</label>
+          <label class="radio-option"><input type="radio" name="department" value="Teaching, Learning and Culture"/>Teaching, Learning and Culture</label>
+          <label class="radio-option"><input type="radio" name="department" value="Other" id="dept-other"/>Other</label>
+          <input class="field-input other-input" type="text" id="dept-other-text" placeholder="Please specify" style="display:none;"/>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Project Ranking<span class="required-star">*</span></label>
+          <div class="field-hint">Please rank the following projects in order of your preference — 1 being most interested. Drag and drop, or use the arrows.</div>
+          <ol class="rank-list" id="rank-list"></ol>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="field-notes">Anything about your background, experience, or interests you'd like faculty to know?</label>
+          <div class="field-hint">Optional — 300 characters max.</div>
+          <textarea class="field-textarea" id="field-notes" name="notes" maxlength="300"></textarea>
+          <div class="char-counter"><span id="char-count">0</span> / 300</div>
+        </div>
+
+        <button class="btn-submit" type="submit" id="submit-btn">Submit</button>
+        <div class="error-msg" id="error-msg">Something went wrong. Please try again.</div>
+
+      </form>
+    </div>
+
+    <!-- Success state -->
+    <div class="success-body" id="success-body">
+      <div class="success-title">Thank you for submitting!</div>
+      <p>Your project ranking has been recorded. We will be in touch soon!</p>
+    </div>
+
+  </div>
+
+<script>
+const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbzvpY_VklcS93dhn7isJAF4aOkT6dvOfnuKWp2iZIh3P9ajQglFcEJ-a_dHjskY2Fg5oA/exec';
+
+const PROJECTS = [
+  { id: 'kwok_m',       author: 'M. Kwok',       title: 'Using Linguistics-Informed Strategies to Teach Math Word Problems' },
+  { id: 'kinskey',      author: 'Kinskey',       title: 'Design-Based Professional Learning in Informal STEM: Experiences of Beginning Teachers within a Community of Practice' },
+  { id: 'matthews',     author: 'Matthews',      title: 'Continuous Improvement Efforts ~ TLAC UG Programs' },
+  { id: 'holzman',      author: 'Holzman',       title: 'A Descriptive Analysis of Organizational Habitus and College-Going Culture in U.S. High Schools' },
+  { id: 'kwok_a',       author: 'A. Kwok',       title: 'Several Projects' },
+  { id: 'svajda_hardy', author: 'Svajda-Hardy',  title: 'Teacher Discipline and Licensure Sanctions' },
+  { id: 'bowen',        author: 'Bowen',         title: 'Data Looking for Arts and Civic Education Studies' },
+  { id: 'hawk',         author: 'Hawk',          title: 'TEACH-VR: Transforming Education and Classrooms with Hands-on Virtual Reality' },
+  { id: 'pikus',        author: 'Pikus',         title: 'Family Home STEM Practices' },
+  { id: 'thompson',     author: 'Thompson',      title: '(Project 1) Relational Health in Rural Early Childhood Settings: Advancing a Coaching Tool Through Qualitative Inquiry (Project 2) TEXCS and PlayBots' },
+  { id: 'gagne',        author: 'Gagne',         title: 'Sketch-Based Assessments for Early Childhood Development: Multidisciplinary Planning Toward an NSF Center-Scale Proposal' },
+];
+
+const listEl = document.getElementById('rank-list');
+let currentOrder = PROJECTS.slice();
+
+function renderList() {
+  listEl.innerHTML = '';
+  currentOrder.forEach((p, idx) => {
+    const li = document.createElement('li');
+    li.className = 'rank-item';
+    li.draggable = true;
+    li.dataset.id = p.id;
+    li.innerHTML = `
+      <div class="rank-num">${idx + 1}</div>
+      <div class="rank-handle">⋮⋮</div>
+      <div class="rank-text"><strong>${p.author}:</strong> <em>${p.title}</em></div>
+      <div class="rank-controls">
+        <button type="button" class="rank-btn btn-up" aria-label="Move up" ${idx === 0 ? 'disabled' : ''}>&#8593;</button>
+        <button type="button" class="rank-btn btn-down" aria-label="Move down" ${idx === currentOrder.length - 1 ? 'disabled' : ''}>&#8595;</button>
+      </div>
+    `;
+    listEl.appendChild(li);
+  });
+  attachItemHandlers();
+}
+
+function move(fromIdx, toIdx) {
+  if (toIdx < 0 || toIdx >= currentOrder.length) return;
+  const [item] = currentOrder.splice(fromIdx, 1);
+  currentOrder.splice(toIdx, 0, item);
+  renderList();
+}
+
+function attachItemHandlers() {
+  const items = listEl.querySelectorAll('.rank-item');
+  items.forEach((li, idx) => {
+    li.querySelector('.btn-up').addEventListener('click', () => move(idx, idx - 1));
+    li.querySelector('.btn-down').addEventListener('click', () => move(idx, idx + 1));
+
+    li.addEventListener('dragstart', (e) => {
+      li.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', li.dataset.id);
+    });
+    li.addEventListener('dragend', () => {
+      li.classList.remove('dragging');
+      listEl.querySelectorAll('.rank-item').forEach(x => x.classList.remove('drag-over'));
+    });
+    li.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      li.classList.add('drag-over');
+    });
+    li.addEventListener('dragleave', () => li.classList.remove('drag-over'));
+    li.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const draggedId = e.dataTransfer.getData('text/plain');
+      const fromIdx = currentOrder.findIndex(p => p.id === draggedId);
+      const toIdx = idx;
+      if (fromIdx === -1 || fromIdx === toIdx) return;
+      const [item] = currentOrder.splice(fromIdx, 1);
+      currentOrder.splice(toIdx, 0, item);
+      renderList();
+    });
+  });
+}
+
+renderList();
+
+// Department "Other" toggle
+const deptOtherText = document.getElementById('dept-other-text');
+document.querySelectorAll('input[name="department"]').forEach(r => {
+  r.addEventListener('change', () => {
+    if (document.getElementById('dept-other').checked) {
+      deptOtherText.style.display = 'block';
+      deptOtherText.required = true;
+    } else {
+      deptOtherText.style.display = 'none';
+      deptOtherText.required = false;
+      deptOtherText.value = '';
+    }
+  });
+});
+
+// Character counter
+const notesEl = document.getElementById('field-notes');
+const charCountEl = document.getElementById('char-count');
+notesEl.addEventListener('input', () => {
+  charCountEl.textContent = notesEl.value.length;
+});
+
+// Submit
+document.getElementById('ranking-form').addEventListener('submit', async function (e) {
+  e.preventDefault();
+
+  const name = document.getElementById('field-name').value.trim();
+  const email = document.getElementById('field-email').value.trim();
+  const deptRadio = document.querySelector('input[name="department"]:checked');
+  let department = deptRadio ? deptRadio.value : '';
+  if (department === 'Other') {
+    const other = deptOtherText.value.trim();
+    if (!other) return;
+    department = 'Other: ' + other;
+  }
+  const notes = notesEl.value.trim();
+
+  if (!name || !email || !department) return;
+
+  const btn = document.getElementById('submit-btn');
+  const errEl = document.getElementById('error-msg');
+
+  const now = new Date();
+  const date_submitted = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const time = now.toTimeString().slice(0, 8);
+
+  // Build ranking payload: { rank_1: "author - title", rank_2: ..., ... }
+  const ranking = {};
+  currentOrder.forEach((p, idx) => {
+    ranking['rank_' + (idx + 1)] = `${p.author}: ${p.title}`;
+  });
+
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+  errEl.style.display = 'none';
+
+  try {
+    const res = await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'project_ranking',
+        name, email, department, notes,
+        date_submitted, time,
+        ...ranking
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok || data.status !== 'ok') throw new Error('Webhook error');
+
+    document.getElementById('form-body').style.display = 'none';
+    document.getElementById('success-body').style.display = 'block';
+  } catch {
+    btn.disabled = false;
+    btn.textContent = 'Submit';
+    errEl.style.display = 'block';
+  }
+});
+</script>
+
+</body>
+</html>
