@@ -213,13 +213,11 @@ document.getElementById('signup-form').addEventListener('submit', async function
   errEl.style.display = 'none';
 
   try {
-    const res = await fetch(WEBHOOK_URL, {
+    await fetch(WEBHOOK_URL, {
       method: 'POST',
+      mode: 'no-cors',
       body: JSON.stringify({ action: 'listserv_signup', name, email, date_subscribed, time })
     });
-
-    const data = await res.json();
-    if (!res.ok || data.status !== 'ok') throw new Error('Webhook error');
 
     // Show success state
     document.getElementById('form-body').style.display    = 'none';
